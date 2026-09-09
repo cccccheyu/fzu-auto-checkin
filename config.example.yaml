@@ -6,7 +6,7 @@ user:
   # 注意：token 有有效期，失效后需重新获取（脚本会明确报错提示）
   token: ""
 
-  # 以下两项为可选：CAS 自动登录（src/login.py，开发中）
+  # 以下两项为可选：CAS 自动登录（已实现，token 为空时自动用学号密码换新 token 并回写 config.yaml）
   # 填【当前能成功登录智汇福大 App 的账号密码】：
   #   username = 学号
   #   password = 你现在登录智汇福大 App 用的密码
