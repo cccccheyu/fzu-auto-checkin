@@ -17,10 +17,12 @@ user:
   password: ""          # 当前登录智汇福大 App 的密码
 
 # 晚点名签到位置（高德 GCJ-02 坐标系，填你在校区内常驻位置的真实坐标）
+# 获取方法：打开高德坐标拾取器 https://lbs.amap.com/tools/picker
+#           搜索/点选你的宿舍楼 → 复制"经度,纬度"分别填入下面两行
 checkin:
   longitude: ""         # 经度，如 119.20463
   latitude: ""          # 纬度，如 26.04920
-  actual_location: ""   # 打卡上报的地址文案，如 "福州大学旗山校区生活区"
+  actual_location: ""   # 打卡上报的地址文案，如 "福州大学旗山校区生活区X号楼"
 
 # 推送通道：填一种即可，其余留空
 notify:
