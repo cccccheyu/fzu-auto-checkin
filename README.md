@@ -1,72 +1,106 @@
-# fzu-auto-checkin · 智汇福大晚点名自动签到
+# fzu-auto-checkin · 福州大学晚点名自动签到
 
-福州大学「智汇福大」App 晚点名签到的自动化工具。双版本路线：
+福州大学「智汇福大」晚点名（21:30–23:59）的自动签到工具：**每晚定时自动打卡，结果微信推送**。手机零安装，iOS / 安卓都能用。
 
-- **v0.1 · 无障碍版**（Android Auto.js 脚本）：定时打开智汇福大 → 自动进入晚点名 → 自动点签到。不碰接口、不怕改版加密，上手门槛最低。
-- **v1.0 · 接口版**（Python + GitHub Actions）：逆向晚点名 H5 接口，云端定时执行，结果微信推送。**手机上什么都不用装，iOS 用户同样适用。**
-
-> ⚠️ **免责声明**
+> ⚠️ **使用须知**
 >
-> 1. 本项目仅供学习自动化、Android 无障碍开发与接口逆向技术交流使用。
-> 2. 晚点名是学校的安全确认制度，请仅在**本人确实在校**时用于防止漏签，切勿用于向学校隐瞒真实在/离校状态。
-> 3. **禁止任何人使用本项目提供付费代挂服务。**
-> 4. 因使用本项目违反校规或造成的一切后果，由使用者自行承担。
-> 5. 请勿在本项目 Issue/PR 中提交真实密码、token 等凭据。
+> 晚点名是学校的安全确认制度。本项目仅用于**本人确实在校时防止漏签**，禁止用于向学校隐瞒真实在/离校状态，禁止付费代挂。违规后果由使用者自行承担。
 
-## 当前状态
+## 功能
 
-| 模块 | 状态 |
-|------|------|
-| 项目骨架 / 配置模板 | ✅ 已完成 |
-| 微信推送（Server酱/PushPlus/Bark/企业微信） | ✅ 已完成 |
-| GitHub Actions 定时任务 | ✅ 已完成 |
-| v0.1 无障碍脚本 | ✅ 控件已 dump 并填充（基于 MuMu 模拟器实测） |
-| v1.0 接口协议逆向 | ✅ **完成**（免登 token + AES-CBC + 4 个接口全打通，见 [docs/protocol.md](docs/protocol.md)） |
-| v1.0 客户端实现 | ✅ `src/checkin.py`（init → check → clockIn 全链路） |
-| **端到端真实验证** | ✅ **2026-09-09 实测签到成功**（服务器回执 SUCCESS，打卡时间与地点均正确落库） |
-| CAS 自动换取 token | ✅ **实现并实测通过**（学号密码自动登录，token 失效自动换新并回写） |
+- ⏰ 定时自动签到（默认每晚 21:35 / 21:50 两次，错过一次还有一次）
+- 📲 签到结果微信推送（Server酱 / PushPlus / Bark / 企业微信）
+- 🔑 支持学号密码全自动登录，token 过期自动换新，无需手工维护
+- 📍 定位校验预检：坐标不在校区内会明确报错，不会乱点
 
-**iOS 用户看这里**：iOS 无越狱抓不到 App 内部请求（SSL Pinning），也无法模拟点击——
-所以 iOS 的正确姿势是 **v1.0 云端跑**：脚本在 GitHub Actions 上定时执行，你手机只收
-微信推送，什么都不用装。获取一次性 token 需要 Android 环境借力（[docs/protocol.md](docs/protocol.md) §4），
-CAS 自动登录完成后将不再需要。
+## 快速开始（3 步）
 
-## 路线图
+### 第 1 步 · 拿到代码
 
-- [x] 项目骨架、推送、定时任务
-- [x] PC 安装 Android 模拟器（MuMu），安装智汇福大 APK
-- [x] v0.1：uiautomator dump 晚点名页面控件 → 完成自动点击脚本
-- [x] v1.0：logcat + 前端 JS 静态分析逆向晚点名接口（无需 Frida），AES-CBC 参数加密破解，`src/checkin.py` 全链路实现
-- [x] **端到端真实验证（2026-09-09）：真实签到成功，服务器回执 SUCCESS**
-- [x] **CAS 自动登录实测通过**：逆向 cas-login-new 前端加密（密码作 AES 明文加密 croypto 挑战值），学号密码直接换 token，全自动免维护
-- [ ] 发布 v1.0，支持多账号、结果推送
-
-## 目录结构
-
-```
-fzu-auto-checkin/
-├── main.py                  # v1.0 入口：init → check → clockIn → 推送
-├── config.example.yaml      # 配置模板（复制为 config.yaml 填真实值）
-├── requirements.txt
-├── src/
-│   ├── config.py            # 读取配置
-│   ├── login.py             # CAS 自动登录（TODO，可选项）
-│   ├── checkin.py           # 晚点名接口客户端（token + AES-CBC，已实现）
-│   └── notify.py            # 微信推送
-├── scripts/
-│   └── autojs_wandianming.js    # v0.1 无障碍脚本（控件已实测填充）
-├── docs/
-│   ├── protocol.md          # 晚点名接口协议逆向笔记（token/加密/API 全记录）
-│   └── capture.md           # 抓包教程
-└── .github/workflows/checkin.yml  # v1.0 定时任务
+```bash
+git clone https://github.com/cccccheyu/fzu-auto-checkin.git
+cd fzu-auto-checkin
+pip install -r requirements.txt
 ```
 
-## 参与贡献（欢迎各校同学）
+### 第 2 步 · 填配置
 
-1. 有 Android 设备/模拟器的同学：按 [`docs/capture.md`](docs/capture.md) 抓包（或用 Auto.js dump 控件），提 Issue/PR 提交你学校/系统的适配。
-2. 提交内容请**脱敏**：密码、学号、token 一律打码，只保留结构。
-3. 本项目不接受、不鼓励任何形式的代挂与有偿使用。
+复制模板为 `config.yaml`（此文件已被 .gitignore 忽略，不会被提交）：
 
-## 许可证
+```bash
+cp config.example.yaml config.yaml
+```
+
+逐项填写（每项怎么填都写在模板注释里）：
+
+| 配置项 | 填什么 | 怎么获取 |
+|--------|--------|----------|
+| `user.username` / `user.password` | **登录智汇福大 App 的学号和密码**（推荐，全自动免维护） | 你平时登 App 用的那套 |
+| `user.token` | 免登 token（可选项，与账密二选一即可） | 见 [docs/protocol.md](docs/protocol.md) §4 |
+| `checkin.longitude` / `latitude` | 你在校区内宿舍楼的坐标 | 打开[高德坐标拾取器](https://lbs.amap.com/tools/picker) → 搜索你的宿舍楼 → 复制"经度,纬度" |
+| `checkin.actual_location` | 打卡上报的地址文案 | 如「福州大学旗山校区生活区X号楼」 |
+| `notify.*` | 推送渠道（填一种即可） | [Server酱](https://sct.ftqq.com) / [PushPlus](https://www.pushplus.plus) 注册即得 key |
+
+### 第 3 步 · 跑起来
+
+**先本地试一次**（确认配置没问题）：
+
+```bash
+python main.py
+```
+
+输出「已签到 / 无需操作」或「签到成功」即为配置正确。
+
+**然后挂到 GitHub Actions 云端自动跑**（推荐）：
+
+1. 在 GitHub 上 Fork 本仓库，或新建一个 **私有仓库** 推送这份代码
+2. 仓库 `Settings → Secrets and variables → Actions → New repository secret`，名称填 `CONFIG_YAML`，值 = 你本地的 `config.yaml` 全文
+3. 完成。每天北京时间 21:35 / 21:50 自动执行，结果推送到微信
+
+> 💡 为什么推荐私有仓库：你的凭据只通过 Secret 注入，不进代码库；Actions 免费额度对私有库也够用（每天跑一次绰绰有余）。
+
+## 常见问题
+
+<details>
+<summary><b>token 是什么？会过期吗？</b></summary>
+
+登录态凭证。**推荐直接填学号密码**：脚本会自动登录换 token 并回写配置，全程无感。只有不想存密码的人才需要手动获取 token（过期后重新取一次即可）。
+</details>
+
+<details>
+<summary><b>迟到线是几点？</b></summary>
+
+**22:30**。21:30–22:30 打卡为正常，22:30–23:59 打卡记迟到。定时任务设在 21:35/21:50，正常情况下不会迟到。
+</details>
+
+<details>
+<summary><b>运行报「服务器暂未返回今日计划」？</b></summary>
+
+跨午夜时段（约 0:00–1:00）服务器尚未发布当日计划，会返回 500，属正常现象，稍后再试即可。定时任务设在签到窗口内，不受影响。
+</details>
+
+<details>
+<summary><b>人不在学校会怎样？</b></summary>
+
+脚本不做真实定位——这是特性也是红线：**请在本人确实在校时使用**。长期离校（实习、交换等）请走辅导员报备请假，名正言顺。
+</details>
+
+<details>
+<summary><b>iOS 用户能用吗？</b></summary>
+
+能，而且是最省事的用法：脚本跑在 GitHub Actions 云端，iPhone 只收微信推送，什么都不用装。
+</details>
+
+## 工作原理
+
+晚点名页是一个 H5 页面，认证只靠一个免登 token。本项目通过静态分析其前端代码逆向出完整协议：4 个接口（查状态 / 校时 / 定位校验 / 打卡）+ AES-CBC 参数加密，无需 Frida、无需抓包工具。完整逆向笔记见 [docs/protocol.md](docs/protocol.md)。
+
+另附 v0.1 Android 无障碍脚本（`scripts/autojs_wandianming.js`）：模拟点击方案，不碰接口，供参考。
+
+## 参与贡献
+
+欢迎提 Issue / PR 适配其他学校或系统。提交内容请**脱敏**（密码、学号、token 一律打码）。本项目不接受、不鼓励任何形式的代挂与有偿使用。
+
+## License
 
 MIT

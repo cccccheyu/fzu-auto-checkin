@@ -9,6 +9,8 @@ from src.notify import notify
 
 import re
 
+import requests
+
 
 def _save_token(cfg, token: str):
     """把新 token 回写到 config.yaml（避免每次运行都重新登录）。"""
@@ -44,7 +46,15 @@ def main():
         _save_token(cfg, token)
 
     client = AttnClient(token)
-    status = query_today_task(client, cfg)
+    try:
+        status = query_today_task(client, cfg)
+    except requests.HTTPError as e:
+        # 跨午夜时段（约 0:00-1:00）服务器尚未发布当日计划时会返回 500，
+        # 属正常现象；定时任务设在 21:35/21:50 不受影响。
+        title = "智汇福大晚点名：服务器暂未返回今日计划"
+        print(title, e)
+        notify(cfg, title, "服务器暂时无今日计划数据（跨天时段/服务波动），本次跳过。稍后自动重试无需操作。")
+        return
     init_data = status["init"]
 
     if not status["need_checkin"]:
