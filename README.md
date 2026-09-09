@@ -27,6 +27,8 @@ pip install -r requirements.txt
 
 ### 第 2 步 · 填配置
 
+> 🖱️ **不想手填配置？用[网页版配置生成器](https://ab29158412654ce793c6cea3134abfb9.app.workbuddy.link)**：填三步表单（账号 / 位置 / 推送方式）→ 一键生成配置 → 粘贴到 GitHub Secret，全程浏览器完成。纯前端页面，不收集任何数据。也可以直接把仓库里的 `web/configurator.html` 下载后双击离线使用。下面的手动流程照旧可用。
+
 复制模板为 `config.yaml`（此文件已被 .gitignore 忽略，不会被提交）：
 
 ```bash
