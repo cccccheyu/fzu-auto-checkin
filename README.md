@@ -23,8 +23,8 @@
 | v0.1 无障碍脚本 | ✅ 控件已 dump 并填充（基于 MuMu 模拟器实测） |
 | v1.0 接口协议逆向 | ✅ **完成**（免登 token + AES-CBC + 4 个接口全打通，见 [docs/protocol.md](docs/protocol.md)） |
 | v1.0 客户端实现 | ✅ `src/checkin.py`（init → check → clockIn 全链路） |
+| **端到端真实验证** | ✅ **2026-09-09 实测签到成功**（服务器回执 SUCCESS，打卡时间与地点均正确落库） |
 | CAS 自动换取 token | ⏳ TODO（目前 token 需从 Android logcat 获取，见下） |
-| v0.1 / v1.0 真机验证 | ⏳ 待校园内实测 |
 
 **iOS 用户看这里**：iOS 无越狱抓不到 App 内部请求（SSL Pinning），也无法模拟点击——
 所以 iOS 的正确姿势是 **v1.0 云端跑**：脚本在 GitHub Actions 上定时执行，你手机只收
@@ -37,7 +37,7 @@ CAS 自动登录完成后将不再需要。
 - [x] PC 安装 Android 模拟器（MuMu），安装智汇福大 APK
 - [x] v0.1：uiautomator dump 晚点名页面控件 → 完成自动点击脚本
 - [x] v1.0：logcat + 前端 JS 静态分析逆向晚点名接口（无需 Frida），AES-CBC 参数加密破解，`src/checkin.py` 全链路实现
-- [ ] 真机/真 token 实测一轮完整签到
+- [x] **端到端真实验证（2026-09-09）：真实签到成功，服务器回执 SUCCESS**
 - [ ] CAS 自动登录换取 token（`src/login.py`），实现全自动免维护
 - [ ] 发布 v1.0，支持多账号、结果推送
 
