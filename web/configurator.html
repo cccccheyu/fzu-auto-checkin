@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>福大晚点名自动签到 · 配置生成器</title>
+<style>
+  :root { --brand:#4f6ef2; --bg:#f6f7fb; --card:#fff; --line:#e5e8f0; --txt:#1c2333; --sub:#6b7280; --ok:#16a34a; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background:var(--bg); color:var(--txt); line-height:1.6; padding:24px 12px 80px; }
+  .wrap { max-width:640px; margin:0 auto; }
+  h1 { font-size:22px; margin-bottom:4px; }
+  .sub { color:var(--sub); font-size:14px; margin-bottom:20px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px; margin-bottom:14px; }
+  .step { display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; border-radius:50%; background:var(--brand); color:#fff; font-size:13px; margin-right:8px; }
+  .card h2 { font-size:16px; margin-bottom:12px; display:flex; align-items:center; }
+  label { display:block; font-size:13px; color:var(--sub); margin:10px 0 4px; }
+  input[type=text], input[type=password], select { width:100%; padding:9px 12px; border:1px solid var(--line); border-radius:8px; font-size:14px; background:#fbfcfe; }
+  input:focus, select:focus { outline:2px solid var(--brand); border-color:transparent; }
+  .row { display:flex; gap:10px; } .row>div { flex:1; }
+  .hint { font-size:12px; color:var(--sub); margin-top:4px; }
+  .hint a { color:var(--brand); }
+  .seg { display:flex; gap:0; border:1px solid var(--line); border-radius:8px; overflow:hidden; margin-bottom:4px; }
+  .seg button { flex:1; padding:8px 0; border:none; background:#fff; font-size:14px; cursor:pointer; color:var(--sub); }
+  .seg button.on { background:var(--brand); color:#fff; }
+  .chk { display:flex; align-items:flex-start; gap:8px; font-size:13px; margin-top:6px; }
+  .chk input { margin-top:4px; }
+  .btn { display:inline-block; width:100%; padding:11px 0; border:none; border-radius:10px; background:var(--brand); color:#fff; font-size:15px; cursor:pointer; margin-top:14px; }
+  .btn.ghost { background:#eef1fe; color:var(--brand); }
+  .btn:disabled { opacity:.45; cursor:not-allowed; }
+  textarea { width:100%; height:190px; border:1px solid var(--line); border-radius:8px; padding:10px; font:12px/1.5 Consolas,monospace; background:#fbfcfe; white-space:pre; }
+  .ok-msg { color:var(--ok); font-size:13px; margin-top:6px; display:none; }
+  .hide { display:none; }
+  .plat-list { margin-top:6px; }
+  .plat { display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid var(--line); border-radius:8px; margin-bottom:8px; cursor:pointer; }
+  .plat.on { border-color:var(--brand); background:#f5f7ff; }
+  .plat input { accent-color:var(--brand); }
+  .plat b { font-size:14px; } .plat span { font-size:12px; color:var(--sub); display:block; }
+  footer { text-align:center; color:var(--sub); font-size:12px; margin-top:24px; }
+  footer a { color:var(--brand); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🎓 福大晚点名自动签到 · 配置生成器</h1>
+  <p class="sub">全程在你的浏览器里完成，任何信息都不会上传。最后复制生成的配置，粘贴到你的私有仓库 Secret 即可。</p>
+
+  <!-- 第 1 步 账号 -->
+  <div class="card">
+    <h2><span class="step">1</span>登录账号</h2>
+    <div class="seg" id="authSeg">
+      <button class="on" data-v="pwd">学号 + 密码（推荐，全自动）</button>
+      <button data-v="token">只用 token</button>
+    </div>
+    <div id="authPwd">
+      <label>学号（登录智汇福大 App 用的）</label>
+      <input type="text" id="username" placeholder="如 3xxxxxxxx">
+      <label>密码（你现在登录 App 用的那个）</label>
+      <input type="password" id="password" placeholder="••••••••">
+    </div>
+    <div id="authToken" class="hide">
+      <label>免登 token</label>
+      <input type="text" id="token" placeholder="从 docs/protocol.md §4 的方式获取">
+      <p class="hint">token 会过期，过期需重新获取；没有这个顾虑就用学号密码。</p>
+    </div>
+  </div>
+
+  <!-- 第 2 步 位置 -->
+  <div class="card">
+    <h2><span class="step">2</span>签到位置（你在校区内的宿舍楼）</h2>
+    <div class="row">
+      <div><label>经度 longitude</label><input type="text" id="lng" placeholder="119.xxxxx"></div>
+      <div><label>纬度 latitude</label><input type="text" id="lat" placeholder="26.xxxxx"></div>
+    </div>
+    <label>地址文案（打卡记录里显示的）</label>
+    <input type="text" id="addr" placeholder="如 福州大学旗山校区生活区X号楼">
+    <p class="hint">坐标获取：<a href="https://lbs.amap.com/tools/picker" target="_blank">打开高德坐标拾取器</a> → 搜索你的宿舍楼 → 把“经度,纬度”分别复制到上面两格。⚠️ 只在本人确实在校时使用，工具不伪造定位。</p>
+  </div>
+
+  <!-- 第 3 步 推送 -->
+  <div class="card">
+    <h2><span class="step">3</span>消息提醒（可选，不选则完全静默）</h2>
+    <div class="plat-list" id="platList">
+      <label class="plat on"><input type="radio" name="plat" value="none" checked><b>不提醒</b><span>签到在云端静默完成</span></label>
+      <label class="plat"><input type="radio" name="plat" value="pushplus"><b>PushPlus（微信）</b><span>扫码登录 pushplus.plus 拿 token，最简单</span></label>
+      <label class="plat"><input type="radio" name="plat" value="serverchan"><b>Server酱（微信）</b><span>sct.ftqq.com 扫码拿 SendKey</span></label>
+      <label class="plat"><input type="radio" name="plat" value="bark"><b>Bark（iPhone 通知）</b><span>App Store 装 Bark，复制推送 URL 里的 key</span></label>
+    </div>
+    <div id="platField" class="hide">
+      <label id="platLabel">Key / Token</label>
+      <input type="text" id="platKey" placeholder="粘贴你复制的 key">
+      <button class="btn ghost" id="testPush">📤 发一条测试推送到我手机</button>
+      <p class="ok-msg" id="testOk">已发送！看一眼手机收到了吗。</p>
+      <p class="hint" id="platHint"></p>
+    </div>
+  </div>
+
+  <!-- 第 4 步 生成 -->
+  <div class="card">
+    <h2><span class="step">4</span>生成配置</h2>
+    <label class="chk"><input type="checkbox" id="agree"><span>我承诺仅在<b>本人确实在校</b>时使用，不用于隐瞒在/离校状态，不用于代挂。</span></label>
+    <button class="btn" id="gen" disabled>生成配置</button>
+    <div id="out" class="hide">
+      <label>方式 A：CONFIG_YAML（推荐）—— 整段复制，粘贴到 GitHub 仓库的 Secrets</label>
+      <textarea id="outSecret" readonly></textarea>
+      <button class="btn ghost" data-copy="outSecret">📋 复制 Secret 内容</button>
+      <a class="btn" style="text-decoration:none;text-align:center" href="https://github.com/cccccheyu/fzu-auto-checkin/settings/secrets/actions" target="_blank">➡️ 打开 GitHub Secret 设置页</a>
+      <label style="margin-top:14px">方式 B：本地运行 —— 保存为仓库根目录的 config.yaml</label>
+      <textarea id="outYaml" readonly></textarea>
+      <button class="btn ghost" data-copy="outYaml">📋 复制 config.yaml</button>
+      <p class="hint">粘贴 Secret 后，每天北京时间 21:35 / 21:50 自动签到。操作详情见仓库 README。</p>
+    </div>
+  </div>
+
+  <footer>开源项目 <a href="https://github.com/cccccheyu/fzu-auto-checkin" target="_blank">fzu-auto-checkin</a> · 本页面为纯静态工具，不收集任何数据</footer>
+</div>
+
+<script>
+// —— 账号方式切换 ——
+const authSeg = document.getElementById('authSeg');
+let authMode = 'pwd';
+authSeg.addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  authSeg.querySelectorAll('button').forEach(x => x.classList.remove('on')); b.classList.add('on');
+  authMode = b.dataset.v;
+  document.getElementById('authPwd').classList.toggle('hide', authMode !== 'pwd');
+  document.getElementById('authToken').classList.toggle('hide', authMode !== 'token');
+});
+
+// —— 推送平台 ——
+const platMeta = {
+  pushplus:  { label:'PushPlus token', hint:'获取：<a href="https://www.pushplus.plus" target="_blank">pushplus.plus</a> 微信扫码登录 → 首页复制 token', url:k=>`https://www.pushplus.plus/send?token=${k}&title=福大晚点名测试推送&content=配置成功，每晚 21:35 自动签到。` },
+  serverchan:{ label:'Server酱 SendKey', hint:'获取：<a href="https://sct.ftqq.com" target="_blank">sct.ftqq.com</a> 微信扫码 → 复制 SendKey', url:k=>`https://sctapi.ftqq.com/${k}.send?title=福大晚点名测试推送&desp=配置成功，每晚 21:35 自动签到。` },
+  bark:      { label:'Bark key', hint:'获取：App Store 安装 Bark → 复制示例 URL 中 api.day.app/ 后面那串', url:k=>`https://api.day.app/${k}/福大晚点名测试推送/配置成功` },
+};
+const platList = document.getElementById('platList');
+let plat = 'none';
+platList.addEventListener('click', e => {
+  const l = e.target.closest('.plat'); if (!l) return;
+  platList.querySelectorAll('.plat').forEach(x => x.classList.remove('on')); l.classList.add('on');
+  plat = l.querySelector('input').value;
+  const show = plat !== 'none';
+  document.getElementById('platField').classList.toggle('hide', !show);
+  if (show) {
+    document.getElementById('platLabel').textContent = platMeta[plat].label;
+    document.getElementById('platHint').innerHTML = platMeta[plat].hint;
+  }
+});
+
+// —— 测试推送（浏览器直发，fire-and-forget）——
+document.getElementById('testPush').addEventListener('click', () => {
+  const k = document.getElementById('platKey').value.trim();
+  if (!k) { alert('先粘贴 key'); return; }
+  fetch(platMeta[plat].url(k), { mode:'no-cors' }).finally(() => {
+    document.getElementById('testOk').style.display = 'block';
+  });
+});
+
+// —— 免责声明 → 解锁生成 ——
+document.getElementById('agree').addEventListener('change', e => {
+  document.getElementById('gen').disabled = !e.target.checked;
+});
+
+// —— 生成 ——
+document.getElementById('gen').addEventListener('click', () => {
+  const yaml = buildYaml();
+  document.getElementById('outYaml').value = yaml;
+  document.getElementById('outSecret').value = yaml;
+  document.getElementById('out').classList.remove('hide');
+  document.getElementById('out').scrollIntoView({ behavior:'smooth' });
+});
+
+function buildYaml() {
+  const v = id => document.getElementById(id).value.trim();
+  let user;
+  if (authMode === 'pwd') {
+    if (!v('username') || !v('password')) { alert('学号和密码还没填全'); throw ''; }
+    user = `user:\n  token: ""\n  username: "${v('username')}"\n  password: "${v('password')}"`;
+  } else {
+    if (!v('token')) { alert('token 还没填'); throw ''; }
+    user = `user:\n  token: "${v('token')}"\n  username: ""\n  password: ""`;
+  }
+  if (!v('lng') || !v('lat')) { alert('坐标还没填（第 2 步）'); throw ''; }
+  const platCfg = plat === 'none' ? '' :
+    plat === 'pushplus' ? `notify:\n  type: "pushplus"\n  pushplus_token: "${v('platKey')}"` :
+    plat === 'serverchan' ? `notify:\n  type: "serverchan"\n  serverchan_key: "${v('platKey')}"` :
+    `notify:\n  type: "bark"\n  bark_url: "https://api.day.app/${v('platKey')}"`;
+  return `# 由配置生成器产生 ${new Date().toLocaleString('zh-CN')}
+${user}
+
+checkin:
+  longitude: "${v('lng')}"
+  latitude: "${v('lat')}"
+  actual_location: "${v('addr') || '福州大学旗山校区'}"
+
+vacation:
+  notify: false
+  skip_ranges:
+    - name: 暑假
+      start: "2026-07-03"
+      end: "2026-08-29"
+    - name: 寒假
+      start: "2027-01-23"
+      end: "2027-02-21"
+
+${platCfg || 'notify:\n  type: "none"'}`;
+}
+
+// —— 复制按钮 ——
+document.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', () => {
+  const t = document.getElementById(b.dataset.copy);
+  navigator.clipboard.writeText(t.value).then(() => {
+    b.textContent = '✅ 已复制';
+    setTimeout(() => b.textContent = b.textContent.replace('✅ 已复制', '📋 复制'), 1500);
+  });
+}));
+</script>
+</body>
+</html>
