@@ -79,8 +79,11 @@ token 由 App 登录后下发，获取方式按成本排序：
    前提：手机上打开过一次晚点名页面。token 有效期未知，失效重取即可。
 
 2. **CAS 自动登录**（TODO，`src/login.py`）：
-   走 `sso.fzu.edu.cn` 标准 CAS（学号+密码 → ticket → callback 换 token），
+   走 `sso.fzu.edu.cn` 统一身份认证（即智汇福大 App 登录用的学号+密码），
+   登录成功 → ticket → callback 换 token。
    实现后无需手动获取 token，适合 GitHub Actions 云端长期运行。
+   注意：sso.fzu.edu.cn 是新版前端（登录表单 JS 动态渲染 + clientredirect 多端适配），
+   需继续分析其前端 JS 的密码加密与提交接口，工作量中等。
 
 3. iOS 用户：无越狱抓不到 App 内 token（SSL Pinning）。建议等 CAS 方案，
    或借用任意一台 Android 设备执行方式 1 一次。
