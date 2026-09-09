@@ -120,7 +120,9 @@ def query_today_task(client: AttnClient, cfg: dict) -> dict:
     """查询当天状态。返回 {"need_checkin": bool, "init": init响应}。"""
     data = client.init()
     user = (data.get("userData") or {})
-    return {"need_checkin": user.get("FState") != "已签到", "init": data}
+    # FState 取值：未签到 / SUCCESS（已签）/ 已签到（兼容不同版本）
+    done_states = {"SUCCESS", "已签到"}
+    return {"need_checkin": user.get("FState") not in done_states, "init": data}
 
 
 def do_checkin(client: AttnClient, cfg: dict, init_data: dict) -> bool:

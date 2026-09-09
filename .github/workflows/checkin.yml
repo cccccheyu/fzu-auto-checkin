@@ -2,10 +2,10 @@ name: checkin
 
 on:
   schedule:
-    # 每天 22:31 与 22:45 各执行一次（晚点名窗口 22:30-23:00，双保险）
-    # cron 为 UTC 时间，UTC+8 需减 8 小时
-    - cron: "31 14 * * *"
-    - cron: "45 14 * * *"
+    # 晚点名窗口 21:30-23:59，迟到线 22:30 → 定在 21:35 / 21:50（北京时间为准）
+    # cron 为 UTC 时间，北京时间 = UTC + 8
+    - cron: "35 13 * * *"
+    - cron: "50 13 * * *"
   workflow_dispatch: {}   # 支持手动触发
 
 jobs:
@@ -21,6 +21,9 @@ jobs:
       - name: Install deps
         run: pip install -r requirements.txt
 
+      # CONFIG_YAML secret 内容 = 完整的 config.yaml，两种认证方式任选：
+      #   1) user.token: "<免登token>"           （token 方式）
+      #   2) user.username / user.password       （学号密码自动登录，token 留空）
       - name: Write config from secrets
         env:
           CONFIG_YAML: ${{ secrets.CONFIG_YAML }}
