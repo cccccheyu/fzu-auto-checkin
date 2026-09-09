@@ -7,12 +7,41 @@ from src.config import load_config
 from src.checkin import AttnClient, query_today_task, do_checkin
 from src.notify import notify
 
+import re
+
+
+def _save_token(cfg, token: str):
+    """把新 token 回写到 config.yaml（避免每次运行都重新登录）。"""
+    try:
+        path = cfg.get("_config_path")
+        if not path:
+            return
+        text = open(path, encoding="utf-8").read()
+        new_text, n = re.subn(
+            r'(token:\s*")([^"]*)(")', rf"\g<1>{token}\g<3>", text, count=1
+        )
+        if n:
+            open(path, "w", encoding="utf-8").write(new_text)
+            print("新 token 已回写 config.yaml")
+    except Exception as e:
+        print(f"token 回写失败（不影响本次运行）: {e}")
+
 
 def main():
     cfg = load_config()
-    token = cfg.get("user", {}).get("token", "")
+    token = (cfg.get("user") or {}).get("token", "")
     if not token:
-        raise SystemExit("config.yaml 未配置 token，获取方式见 docs/protocol.md")
+        username = (cfg.get("user") or {}).get("username", "")
+        password = (cfg.get("user") or {}).get("password", "")
+        if not (username and password):
+            raise SystemExit(
+                "config.yaml 未配置 token，且学号/密码不全（学号密码=智汇福大 App 登录账号）"
+            )
+        from src.login import login as sso_login
+
+        token = sso_login(username, password)
+        print("SSO 登录成功，已获取新 token")
+        _save_token(cfg, token)
 
     client = AttnClient(token)
     status = query_today_task(client, cfg)
