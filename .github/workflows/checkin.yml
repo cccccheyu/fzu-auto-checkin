@@ -1,0 +1,30 @@
+name: checkin
+
+on:
+  schedule:
+    # 每天 22:31 与 22:45 各执行一次（晚点名窗口 22:30-23:00，双保险）
+    # cron 为 UTC 时间，UTC+8 需减 8 小时
+    - cron: "31 14 * * *"
+    - cron: "45 14 * * *"
+  workflow_dispatch: {}   # 支持手动触发
+
+jobs:
+  checkin:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: pip install -r requirements.txt
+
+      - name: Write config from secrets
+        env:
+          CONFIG_YAML: ${{ secrets.CONFIG_YAML }}
+        run: echo "$CONFIG_YAML" > config.yaml
+
+      - name: Run checkin
+        run: python main.py

@@ -1,0 +1,21 @@
+# 智汇福大晚点名自动签到 - 配置模板
+# 复制本文件为 config.yaml 并填写真实值（config.yaml 已被 .gitignore 忽略，勿提交仓库）
+
+# 学号密码登录（智汇福大统一身份认证）
+user:
+  username: ""          # 学号，如 3219000000
+  password: ""          # 统一身份认证密码
+
+# 晚点名签到位置（如需定位，抓包后按真实参数填写；单位视接口而定）
+checkin:
+  longitude: ""         # 经度
+  latitude: ""          # 纬度
+  address: ""           # 地址文本，如 福州大学旗山校区
+
+# 推送通道：填一种即可，其余留空
+notify:
+  type: "serverchan"    # serverchan | pushplus | bark | wecom | none
+  serverchan_key: ""    # Server酱 Turbo SendKey
+  pushplus_token: ""    # PushPlus token
+  bark_url: ""          # Bark 推送完整 URL
+  wecom_webhook: ""     # 企业微信群机器人 webhook
