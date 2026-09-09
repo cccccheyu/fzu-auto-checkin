@@ -6,6 +6,7 @@ v1.0 主路径：直接使用 App 免登 token（获取方式见 docs/protocol.m
 from src.config import load_config
 from src.checkin import AttnClient, query_today_task, do_checkin
 from src.notify import notify
+from src.vacation import matched_range, today_cn
 
 import re
 
@@ -31,6 +32,15 @@ def _save_token(cfg, token: str):
 
 def main():
     cfg = load_config()
+
+    # 假期自动跳过：命中校历/自定义区间时什么都不做（默认静默）
+    vac = matched_range(cfg)
+    if vac:
+        print(f"假期中（{vac}），跳过本次签到。今天是 {today_cn()}。")
+        if (cfg.get("vacation") or {}).get("notify"):
+            notify(cfg, f"智汇福大晚点名：假期中，已跳过（{vac}）", "假期期间自动签到暂停。")
+        return
+
     token = (cfg.get("user") or {}).get("token", "")
     if not token:
         username = (cfg.get("user") or {}).get("username", "")
