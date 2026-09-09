@@ -1,16 +1,20 @@
 # 智汇福大晚点名自动签到 - 配置模板
 # 复制本文件为 config.yaml 并填写真实值（config.yaml 已被 .gitignore 忽略，勿提交仓库）
 
-# 学号密码登录（智汇福大统一身份认证）
 user:
+  # 晚点名 H5 免登 token（获取方式见 docs/protocol.md 的「获取 token」一节）
+  # 注意：token 有有效期，失效后需重新获取（脚本会明确报错提示）
+  token: ""
+
+  # 以下两项为可选：CAS 自动登录（src/login.py，TODO 增强），配了 token 就不用填
   username: ""          # 学号，如 3219000000
   password: ""          # 统一身份认证密码
 
-# 晚点名签到位置（如需定位，抓包后按真实参数填写；单位视接口而定）
+# 晚点名签到位置（高德 GCJ-02 坐标系，填你在校区内常驻位置的真实坐标）
 checkin:
-  longitude: ""         # 经度
-  latitude: ""          # 纬度
-  address: ""           # 地址文本，如 福州大学旗山校区
+  longitude: ""         # 经度，如 119.20463
+  latitude: ""          # 纬度，如 26.04920
+  actual_location: ""   # 打卡上报的地址文案，如 "福州大学旗山校区生活区"
 
 # 推送通道：填一种即可，其余留空
 notify:

@@ -1,3 +1,4 @@
-# 依赖（抓包确认加密算法后可能补充 pycryptodome 等）
+# 依赖
 requests>=2.31.0
 PyYAML>=6.0
+pycryptodome>=3.20.0   # AES-128-CBC（晚点名接口参数加密）
