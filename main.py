@@ -24,7 +24,7 @@ def main():
         notify(cfg, title, "今日晚点名已处理，无需重复签到。")
         return
 
-    if not init_data.get("schoolPosition"):
+    if not init_data.get("schoolData"):
         title = "智汇福大晚点名：今日无考勤计划"
         print(title)
         notify(cfg, title, "服务器未返回签到范围（可能今日无晚点名），未执行打卡。")

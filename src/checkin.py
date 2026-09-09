@@ -53,8 +53,12 @@ class AttnClient:
         self.http.headers.update({"User-Agent": UA, "token": token})
 
     def _enc_get(self, path: str, payload: dict):
-        """GET，密文放 param 查询参数（对应前端 createEncryptApi）。"""
-        param = urllib.parse.quote(encrypt(payload), safe="")
+        """GET，密文放 param 查询参数（对应前端 createEncryptApi）。
+
+        注意：前端 axios 会对已 encodeURIComponent 的值再编码一次（双重编码），
+        服务端自行 URLDecoder 解一层，这里保持一致。
+        """
+        param = urllib.parse.quote(urllib.parse.quote(encrypt(payload), safe=""), safe="")
         url = f"{BASE_URL}{API_PREFIX}/{path}?param={param}"
         resp = self.http.get(url, timeout=15)
         resp.raise_for_status()
@@ -115,41 +119,50 @@ class AttnClient:
 def query_today_task(client: AttnClient, cfg: dict) -> dict:
     """查询当天状态。返回 {"need_checkin": bool, "init": init响应}。"""
     data = client.init()
-    return {"need_checkin": not data.get("clockSuccess"), "init": data}
+    user = (data.get("userData") or {})
+    return {"need_checkin": user.get("FState") != "已签到", "init": data}
 
 
 def do_checkin(client: AttnClient, cfg: dict, init_data: dict) -> bool:
     """按 init 数据 + 配置定位完成 check → clockIn 全链路。"""
     import datetime
 
+    user = init_data["userData"]
+    params = init_data["paramsData"]
     longitude = float(cfg["checkin"]["longitude"])
     latitude = float(cfg["checkin"]["latitude"])
 
-    # 1. 定位校验
-    matched = client.check(longitude, latitude, init_data.get("schoolPosition"))
+    # 1. 组装签到范围并做定位校验（schoolPosition = {range: [多边形...]}）
+    polygons = []
+    for sd in init_data.get("schoolData") or []:
+        try:
+            polygons.extend(json.loads(sd["FPosition"]).get("range") or [])
+        except Exception:
+            continue
+    matched = client.check(longitude, latitude, {"range": polygons})
     if not matched:
         return False
-    campus = matched[0] or {}
 
-    # 2. 迟到判定（以服务器时间为准，无则退回本机时间）
+    # 2. 迟到判定：以服务器时间为准，与 FLateTime（迟到线）比较
     ts = client.server_time()
     now = datetime.datetime.fromtimestamp(ts / 1000) if ts else datetime.datetime.now()
+    late_line = (params.get("FLateTime") or params.get("FEndTime") or "23:59").strip()
     try:
-        h, m = map(int, (init_data.get("clockEndTime") or "23:59").split(":")[:2])
+        h, m = map(int, late_line.split(":")[:2])
         is_late = now.hour * 60 + now.minute > h * 60 + m
     except Exception:
         is_late = False
 
     # 3. 提交打卡
     client.clock_in(
-        campus_id=campus.get("id"),
+        campus_id=(matched[0] or {}).get("id") or user.get("FDefaultCampus"),
         longitude=longitude,
         latitude=latitude,
-        start_time=init_data.get("clockStartTime"),
-        end_time=init_data.get("clockEndTime"),
+        start_time=(params.get("FStartTime") or "").strip(),
+        end_time=(params.get("FEndTime") or "").strip(),
         actual_location=cfg["checkin"].get("actual_location", ""),
-        coll_unit=campus,
-        way=init_data.get("clockWay"),
+        coll_unit=user.get("FCollUnit"),
+        way=user.get("FWay"),
         is_late=is_late,
     )
     return True
