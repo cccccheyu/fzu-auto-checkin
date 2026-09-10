@@ -60,6 +60,7 @@
   .vdel:hover { background:#fde8e8; color:#c0392b; }
   .vnote { display:none; font-size:11px; color:#b91c1c; margin-top:6px; }
   .vac-warn { display:none; font-size:12px; color:#b91c1c; margin-top:8px; }
+  .live { margin-top:16px; padding-top:14px; border-top:1px dashed var(--line); }
 </style>
 </head>
 <body>
@@ -125,7 +126,7 @@
       <label id="platLabel">Key / Token</label>
       <input type="text" id="platKey" placeholder="粘贴你复制的 key">
       <button class="btn ghost" id="testPush">📤 发一条测试推送到我手机</button>
-      <p class="ok-msg" id="testOk">已发送！看一眼手机收到了吗。</p>
+      <p class="ok-msg" id="testOk">已发出！10 秒内手机没收到，多半是 key 复制错了，回去核对一下。</p>
       <p class="hint" id="platHint"></p>
     </div>
   </div>
@@ -184,18 +185,31 @@
   <!-- 后续维护：补充假期 -->
   <div class="card">
     <h2>🌴 后续补假期（不用签的日子）</h2>
-    <p class="hint">寒暑假（2026—2027 校历）已经写在下面生成的配置里，不用管。实训、调休、请假离校等日子在这里补：<b>只选起止日期</b>就行，格式会自动统一。</p>
+    <p class="hint">寒暑假已按《福州大学 2026—2027 学年校历》（福大教〔2026〕10号）写在下面生成的配置里，不用管。法定节假日、实训、调休、请假离校等日子在这里补：<b>只选起止日期</b>就行，格式会自动统一。</p>
     <div id="vacList"></div>
     <button class="btn ghost" id="vacAdd" type="button" style="margin-top:8px">＋ 添加一段假期</button>
     <p class="vac-warn" id="vacWarn"></p>
     <label style="margin-top:12px">生成的配置（整段替换你仓库里 <code>config.yaml</code> 的 <code>vacation:</code> 段）</label>
     <textarea id="vacOut" readonly style="height:150px"></textarea>
     <button class="btn ghost" data-copy="vacOut">📋 复制这段配置</button>
-    <p class="hint">贴好后在 GitHub 页面点 <b>Commit changes</b> 保存，之后这些日子就会自动跳过。<b>假期是跳过不签，绝不会替你补签。</b></p>
+    <p class="hint">手动方式：复制后贴到 GitHub 上你仓库的 <code>config.yaml</code>，点 <b>Commit changes</b> 保存。<b>假期是跳过不签，绝不会替你补签。</b></p>
+    <div class="live">
+      <label class="chk" style="margin-top:0"><input type="checkbox" id="vacLiveOn"><span>懒人模式：<b>一键写入我的仓库</b>，不用手动去 GitHub 改</span></label>
+      <div id="vacLiveBox" class="hide">
+        <label>GitHub Token</label>
+        <input type="password" id="vacPat" placeholder="粘贴 ghp_ 开头的 token">
+        <p class="hint">没有？<a href="https://github.com/settings/tokens/new?scopes=repo&description=fzu-checkin" target="_blank">点这里创建</a>（勾 <code>repo</code>）。只在点下面按钮时用一次，本页不保存、不上传。</p>
+        <label>你的私有仓库</label>
+        <input type="text" id="vacRepo" placeholder="如 cccccheyu/fzu-checkin；只填仓库名则默认在你账号下">
+        <button class="btn" id="vacPush">🚀 写入 config.yaml</button>
+        <pre id="vacLog" class="hide"></pre>
+      </div>
+    </div>
     <div style="display:flex;gap:14px;align-items:center;margin-top:16px;padding-top:14px;border-top:1px dashed var(--line)">
       <img src="qr.png" alt="本页二维码" style="width:112px;height:112px;border:1px solid var(--line);border-radius:10px;background:#fff;padding:4px">
-      <div class="hint" style="margin:0">💡 <b>建议把这个二维码 / 本页链接存下来</b><br>以后要补假期，扫码回到本页，填一下日期、复制配置贴到你仓库就行——不用重新配整个流程。</div>
+      <div class="hint" style="margin:0">💡 <b>建议把这个二维码 / 本页链接存下来</b><br>以后要补假期，扫码回到本页。<b>上次填过的内容会自动带出来</b>，改改日期、复制走就行——不用重新配整个流程。</div>
     </div>
+    <p class="hint">💾 本页会把你在<b>这台设备的浏览器</b>里填过的内容记下来（坐标、地址、假期区间、仓库名），下次打开自动带出。<b>密码 / token / PAT 一律不记、不上传。</b>想清空：<a href="#" id="memClear">清空本机记忆</a></p>
   </div>
 
   <!-- 意见反馈 -->
@@ -375,12 +389,12 @@ checkin:
 vacation:
   notify: false
   skip_ranges:
-    - name: 暑假
-      start: "2026-07-03"
-      end: "2026-08-29"
     - name: 寒假
       start: "2027-01-23"
       end: "2027-02-21"
+    - name: 暑假
+      start: "2027-07-03"
+      end: "2027-08-29"
 
 ${platCfg || 'notify:\n  type: "none"'}`;
 }
@@ -425,8 +439,8 @@ function renderVac(){
     r.querySelector('.vnote').style.display = invalid ? 'block' : 'none';
   });
   const preset = [
-    '    - name: 暑假\n      start: "2026-07-03"\n      end: "2026-08-29"',
-    '    - name: 寒假\n      start: "2027-01-23"\n      end: "2027-02-21"'
+    '    - name: 寒假\n      start: "2027-01-23"\n      end: "2027-02-21"',
+    '    - name: 暑假\n      start: "2027-07-03"\n      end: "2027-08-29"'
   ];
   document.getElementById('vacOut').value =
     'vacation:\n  notify: false\n  skip_ranges:\n' + preset.concat(lines).join('\n');
@@ -544,6 +558,128 @@ document.getElementById('deploy').addEventListener('click', async () => {
     btn.disabled = false;
     btn.textContent = '🚀 重试 / 继续部署';
   }
+});
+
+// —— 补假期：一键写入仓库（只替换 config.yaml 里的 vacation: 段，其余原样保留）——
+const vacLogEl = document.getElementById('vacLog');
+function vlog(msg){
+  vacLogEl.classList.remove('hide');
+  vacLogEl.textContent += msg + '\n';
+  vacLogEl.scrollTop = vacLogEl.scrollHeight;
+}
+document.getElementById('vacLiveOn').addEventListener('change', e => {
+  document.getElementById('vacLiveBox').classList.toggle('hide', !e.target.checked);
+});
+
+// 把文本里顶层 vacation: 段整段换掉；原来没有就追加到末尾
+function replaceVacation(text, block){
+  const lines = text.replace(/\r\n/g, '\n').split('\n');
+  let start = -1;
+  for (let i = 0; i < lines.length; i++){
+    if (/^vacation\s*:/.test(lines[i])) { start = i; break; }
+  }
+  if (start === -1) return text.replace(/\s*$/, '') + '\n\n' + block + '\n';
+  let end = lines.length;
+  for (let i = start + 1; i < lines.length; i++){
+    const ln = lines[i];
+    // 遇到新的顶层键（行首非空白、非注释）即为该段结束
+    if (ln.trim() && !/^\s/.test(ln) && !/^#/.test(ln)) { end = i; break; }
+  }
+  return lines.slice(0, start).concat(block.split('\n')).concat(lines.slice(end)).join('\n');
+}
+
+document.getElementById('vacPush').addEventListener('click', async () => {
+  const btn = document.getElementById('vacPush');
+  const token = document.getElementById('vacPat').value.trim();
+  let repo = document.getElementById('vacRepo').value.trim()
+    .replace(/^https?:\/\/github\.com\//i, '').replace(/\.git$/, '').replace(/^\/+|\/+$/g, '');
+  vacLogEl.textContent = '';
+  if (!token) { alert('先粘贴 GitHub Token'); return; }
+  btn.disabled = true;
+  try {
+    pat = token;
+    vlog('⏳ 验证 Token…');
+    const me = await gh('/user');
+    if (!repo) repo = me.login + '/' + (document.getElementById('repoName').value.trim() || 'fzu-auto-checkin');
+    else if (repo.indexOf('/') === -1) repo = me.login + '/' + repo;
+    vlog('✅ 账号 ' + me.login + '，目标仓库 ' + repo);
+
+    vlog('⏳ 读取现有 config.yaml…');
+    let cur = null, sha = null;
+    try {
+      const f = await gh('/repos/' + repo + '/contents/config.yaml');
+      sha = f.sha;
+      cur = decodeURIComponent(escape(atob((f.content || '').replace(/\n/g, ''))));
+      vlog('✅ 已读到 ' + cur.split('\n').length + ' 行，只替换 vacation: 段，其他原样保留');
+    } catch (e) {
+      if (/404/.test(String(e))) vlog('ℹ️ 该仓库还没有 config.yaml，将新建');
+      else throw e;
+    }
+
+    const block = document.getElementById('vacOut').value;
+    const next = cur ? replaceVacation(cur, block)
+                     : 'user:\n  username: ""\n  password: ""\n\ncheckin:\n  longitude: ""\n  latitude: ""\n  actual_location: ""\n\n' + block + '\n';
+
+    vlog('⏳ 写回仓库…');
+    await gh('/repos/' + repo + '/contents/config.yaml', {
+      method: 'PUT',
+      body: JSON.stringify({ message: 'vacation: 更新假期跳过区间', content: b64utf8(next), sha: sha || undefined })
+    });
+    vlog('🎉 写入成功！这段时间就自动跳过了，不会签到。');
+  } catch (e) {
+    vlog('❌ 失败：' + e.message);
+    vlog('常见原因：Token 没勾 repo 权限 / 仓库名写错 / 网络超时（GitHub 国内时好时坏，等会儿重试通常就过）。');
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+// —— 本机记忆：只记填写内容（坐标 / 地址 / 假期区间 / 仓库名），绝不记密码、token、PAT ——
+const MEM_KEY = 'fzu-configurator-mem-v1';
+let memOff = false;
+function memLoad(){ try { return JSON.parse(localStorage.getItem(MEM_KEY) || '{}'); } catch(e){ return {}; } }
+function memSave(){
+  if (memOff) return;
+  try {
+    const v = id => { const el = document.getElementById(id); return el ? el.value : ''; };
+    const vac = [];
+    document.querySelectorAll('#vacList .vac-item').forEach(r => vac.push({
+      name: r.querySelector('.vname').value,
+      start: r.querySelector('.vstart').value,
+      end: r.querySelector('.vend').value
+    }));
+    localStorage.setItem(MEM_KEY, JSON.stringify({
+      lng: v('lng'), lat: v('lat'), addr: v('addr'),
+      plat: (document.querySelector('input[name=plat]:checked') || {}).value || 'none',
+      repo: v('repoName'), vacRepo: v('vacRepo'), vac: vac
+    }));
+  } catch (e) {}
+}
+function memRestore(){
+  const m = memLoad();
+  const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
+  set('lng', m.lng); set('lat', m.lat); set('addr', m.addr);
+  set('repoName', m.repo); set('vacRepo', m.vacRepo);
+  if (m.plat && m.plat !== 'none') {
+    const r = document.querySelector('input[name=plat][value="' + m.plat + '"]');
+    if (r) r.click();
+  }
+  if (m.vac && m.vac.length) {
+    vacList.innerHTML = '';
+    m.vac.forEach(x => vacRow(x.name, x.start, x.end));
+    renderVac();
+  }
+  return m;
+}
+memRestore();
+const wrapEl = document.querySelector('.wrap');
+['input','change','click'].forEach(ev => wrapEl.addEventListener(ev, memSave));
+document.getElementById('memClear').addEventListener('click', e => {
+  e.preventDefault();
+  if (!confirm('清空本机记忆？填过的内容会被忘掉，页面刷新后回到空白。')) return;
+  memOff = true;
+  try { localStorage.removeItem(MEM_KEY); } catch (err) {}
+  location.reload();
 });
 </script>
 </body>

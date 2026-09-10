@@ -32,12 +32,12 @@ checkin:
 vacation:
   notify: false        # 命中假期时是否推送提醒（默认静默跳过，避免假期刷屏）
   skip_ranges:
-    - name: 暑假
-      start: "2026-07-03"
-      end: "2026-08-29"
     - name: 寒假
       start: "2027-01-23"
       end: "2027-02-21"
+    - name: 暑假
+      start: "2027-07-03"
+      end: "2027-08-29"
 
 # 推送通道：填一种即可，其余留空
 notify:
