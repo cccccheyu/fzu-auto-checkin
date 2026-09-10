@@ -21,13 +21,20 @@ jobs:
       - name: Install deps
         run: pip install -r requirements.txt
 
-      # CONFIG_YAML secret 内容 = 完整的 config.yaml，两种认证方式任选：
+      # 认证配置两种来源，优先级：CONFIG_YAML secret > 仓库内已提交的 config.yaml（私密库场景）
+      # secret 内容 = 完整的 config.yaml，两种认证方式任选：
       #   1) user.token: "<免登token>"           （token 方式）
       #   2) user.username / user.password       （学号密码自动登录，token 留空）
-      - name: Write config from secrets
+      - name: Prepare config (secret overrides committed config)
         env:
           CONFIG_YAML: ${{ secrets.CONFIG_YAML }}
-        run: echo "$CONFIG_YAML" > config.yaml
+        run: |
+          if [ -n "$CONFIG_YAML" ]; then
+            echo "$CONFIG_YAML" > config.yaml
+            echo "config from CONFIG_YAML secret"
+          else
+            test -s config.yaml && echo "config from committed config.yaml"
+          fi
 
       - name: Run checkin
         run: python main.py

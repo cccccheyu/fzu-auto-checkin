@@ -38,12 +38,30 @@
   .plat b { font-size:14px; } .plat span { font-size:12px; color:var(--sub); display:block; }
   footer { text-align:center; color:var(--sub); font-size:12px; margin-top:24px; }
   footer a { color:var(--brand); }
+  pre#log { background:#10162a; color:#b8f5c0; font:12px/1.6 Consolas,monospace; padding:12px; border-radius:8px; max-height:260px; overflow:auto; white-space:pre-wrap; }
+  .pain, .sol { font-size:14px; padding:8px 12px; border-radius:8px; margin-top:8px; }
+  .pain { background:#fef2f2; color:#7f1d1d; }
+  .sol { background:#f0fdf4; color:#14532d; }
+  .sol b { color:#166534; }
+  .guide { margin:12px 0 0; padding-left:20px; font-size:13px; }
+  .guide li { margin-top:8px; }
+  .guide code { background:#eef1f7; padding:1px 5px; border-radius:4px; font-size:12px; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>🎓 福大晚点名自动签到 · 配置生成器</h1>
   <p class="sub">全程在你的浏览器里完成，任何信息都不会上传。最后复制生成的配置，粘贴到你的私有仓库 Secret 即可。</p>
+
+  <!-- 痛点 -->
+  <div class="card">
+    <h2>😵 这说的是你吗？</h2>
+    <div class="pain">21:30 的晚点名，忙着作业 / 游戏 / 睡着了，一晃就过点 → <b>迟到缺勤通报</b></div>
+    <div class="pain">天天定闹钟提醒自己，还得掏出手机打开 App 手动点一遍</div>
+    <div class="sol"><b>✅ 配置一次，一学期清净</b>：在校的每晚 21:35 / 21:50 云端自动签到；寒暑假自动跳过，还能自己加假期区间（实训、调休等不用签的日子），假期绝不替你签</div>
+    <div class="sol"><b>✅ 不打扰</b>：默认静默完成；想知道结果，可推送到微信 / iPhone</div>
+    <div class="sol"><b>✅ 不经手任何第三方</b>：凭据只进你自己的私有仓库，本页面纯前端、不收集任何数据</div>
+  </div>
 
   <!-- 第 1 步 账号 -->
   <div class="card">
@@ -68,13 +86,16 @@
   <!-- 第 2 步 位置 -->
   <div class="card">
     <h2><span class="step">2</span>签到位置（你在校区内的宿舍楼）</h2>
+    <button class="btn ghost" id="locate">📍 自动获取当前位置（人在宿舍时点最准）</button>
+    <p class="ok-msg" id="locOk"></p>
+    <p class="hint" style="margin:6px 0 10px">或手动获取：<a href="https://lbs.amap.com/tools/picker" target="_blank">高德坐标拾取器</a> → 搜索宿舍楼 → 把"经度,纬度"分别填到下面两格</p>
     <div class="row">
       <div><label>经度 longitude</label><input type="text" id="lng" placeholder="119.xxxxx"></div>
       <div><label>纬度 latitude</label><input type="text" id="lat" placeholder="26.xxxxx"></div>
     </div>
     <label>地址文案（打卡记录里显示的）</label>
     <input type="text" id="addr" placeholder="如 福州大学旗山校区生活区X号楼">
-    <p class="hint">坐标获取：<a href="https://lbs.amap.com/tools/picker" target="_blank">打开高德坐标拾取器</a> → 搜索你的宿舍楼 → 把“经度,纬度”分别复制到上面两格。⚠️ 只在本人确实在校时使用，工具不伪造定位。</p>
+    <p class="hint">浏览器定位需授权且要求 HTTPS：微信内打不开时，用 Safari/Chrome 打开本页。⚠️ 只在本人确实在校时使用，工具不伪造定位。</p>
   </div>
 
   <!-- 第 3 步 推送 -->
@@ -98,18 +119,40 @@
   <!-- 第 4 步 生成 -->
   <div class="card">
     <h2><span class="step">4</span>生成配置</h2>
+    <p class="hint" style="margin-bottom:8px">📌 提前准备：需要一个 <b>GitHub 账号</b>（签到跑在 GitHub 云端，免费）。没有？<a href="https://github.com/signup" target="_blank">点这里注册</a>，1 分钟搞定。生成配置后有完整的一步步引导。</p>
+    <p class="hint" style="margin-bottom:8px">🌐 关于梯子：GitHub 国内直连时好时坏，<b>只有注册和配置那几分钟</b>可能打不开——换个时间、用校园网 / 手机热点，或挂梯子都行。<b>配好之后就不用了</b>：签到跑在 GitHub 服务器上，日常零操作、零网络要求。</p>
+    <button class="btn ghost" id="ghCheck" style="margin-top:0">🔗 测一下当前网络能不能打开 GitHub</button>
+    <p class="hint" id="ghCheckResult" style="display:none;margin-top:6px"></p>
     <label class="chk"><input type="checkbox" id="agree"><span>我承诺仅在<b>本人确实在校</b>时使用，不用于隐瞒在/离校状态，不用于代挂。</span></label>
     <button class="btn" id="gen" disabled>生成配置</button>
     <div id="out" class="hide">
-      <label>方式 A：CONFIG_YAML（推荐）—— 整段复制，粘贴到 GitHub 仓库的 Secrets</label>
+      <label>方式 A：云端自动签到（推荐）—— 把下面这段配置放进你自己的私有仓库</label>
       <textarea id="outSecret" readonly></textarea>
-      <button class="btn ghost" data-copy="outSecret">📋 复制 Secret 内容</button>
-      <a class="btn" style="text-decoration:none;text-align:center" href="https://github.com/cccccheyu/fzu-auto-checkin/settings/secrets/actions" target="_blank">➡️ 打开 GitHub Secret 设置页</a>
-      <label style="margin-top:14px">方式 B：本地运行 —— 保存为仓库根目录的 config.yaml</label>
+      <button class="btn ghost" data-copy="outSecret">📋 复制配置内容</button>
+      <ol class="guide">
+        <li>没有 GitHub 账号？<a href="https://github.com/signup" target="_blank">点这里免费注册</a>（1 分钟，需要邮箱）。GitHub 国内直连偶尔卡，打不开就换个时间或挂下校园网试试。</li>
+        <li><a href="https://github.com/new/import" target="_blank">点这里把项目导入到你自己的私有仓库</a>：① "Your old repository's clone URL" 填 <code>https://github.com/cccccheyu/fzu-auto-checkin</code>；② 仓库名随意；③ 选择 <b>Private</b>（私有，重要！你的密码只有你自己能看到）；④ 点 Begin import。</li>
+        <li>导入完成后，在你的仓库页面依次打开：<code>Settings → Secrets and variables → Actions → New repository secret</code>，Name 填 <code>CONFIG_YAML</code>，Secret 粘贴上面复制的内容，点 Add secret。</li>
+        <li>完成！之后每晚 <b>21:35 / 21:50</b> 自动签到，可在仓库的 <code>Actions</code> 标签页查看签到记录。签到结果可回第 3 步配置微信推送。</li>
+      </ol>
+      <label style="margin-top:14px">方式 B：本地运行 —— 保存为仓库根目录的 config.yaml（需要自己有台常开的电脑）</label>
       <textarea id="outYaml" readonly></textarea>
       <button class="btn ghost" data-copy="outYaml">📋 复制 config.yaml</button>
-      <p class="hint">粘贴 Secret 后，每天北京时间 21:35 / 21:50 自动签到。操作详情见仓库 README。</p>
+      <p class="hint">操作详情见仓库 README。</p>
     </div>
+  </div>
+
+  <!-- 第 5 步 一键部署 -->
+  <div class="card">
+    <h2><span class="step">5</span>一键部署（之后啥都不用管）</h2>
+    <p class="hint">用你自己的 GitHub 账号做托管：下面会自动替你创建一个<b>私有仓库</b>、写好全部代码和你的配置，之后每晚 21:35 / 21:50 自动签到。凭据只存在你自己的私有仓库里，不经过任何第三方服务器。</p>
+    <label>GitHub Token</label>
+    <input type="password" id="ghPat" placeholder="粘贴 ghp_ 开头的 token">
+    <p class="hint">没有？<a href="https://github.com/settings/tokens/new?scopes=repo&description=fzu-checkin" target="_blank">点这里创建</a>（登录 GitHub → 直接点页面底部绿色 Generate token 按钮 → 复制粘贴过来）。部署完成后建议删除该 token。</p>
+    <label>私有仓库名</label>
+    <input type="text" id="repoName" value="fzu-auto-checkin">
+    <button class="btn" id="deploy">🚀 一键部署，今晚开始自动签到</button>
+    <pre id="log" class="hide"></pre>
   </div>
 
   <footer>开源项目 <a href="https://github.com/cccccheyu/fzu-auto-checkin" target="_blank">fzu-auto-checkin</a> · 本页面为纯静态工具，不收集任何数据</footer>
@@ -125,6 +168,47 @@ authSeg.addEventListener('click', e => {
   authMode = b.dataset.v;
   document.getElementById('authPwd').classList.toggle('hide', authMode !== 'pwd');
   document.getElementById('authToken').classList.toggle('hide', authMode !== 'token');
+});
+
+// —— 浏览器定位：WGS-84 → GCJ-02（高德/火星坐标）本地转换 ——
+function wgs2gcj(lat, lng) {
+  const a = 6378245.0, ee = 0.00669342162296594323;
+  const tLat = (x, y) => {
+    let r = -100 + 2*x + 3*y + 0.2*y*y + 0.1*x*y + 0.2*Math.sqrt(Math.abs(x));
+    r += (20*Math.sin(6*x*Math.PI) + 20*Math.sin(2*x*Math.PI)) * 2/3;
+    r += (20*Math.sin(y*Math.PI) + 40*Math.sin(y/3*Math.PI)) * 2/3;
+    r += (160*Math.sin(y/12*Math.PI) + 320*Math.sin(y*Math.PI/30)) * 2/3;
+    return r;
+  };
+  const tLng = (x, y) => {
+    let r = 300 + x + 2*y + 0.1*x*x + 0.1*x*y + 0.1*Math.sqrt(Math.abs(x));
+    r += (20*Math.sin(6*x*Math.PI) + 20*Math.sin(2*x*Math.PI)) * 2/3;
+    r += (20*Math.sin(x*Math.PI) + 40*Math.sin(x/3*Math.PI)) * 2/3;
+    r += (150*Math.sin(x/12*Math.PI) + 300*Math.sin(x/30*Math.PI)) * 2/3;
+    return r;
+  };
+  let dLat = tLat(lng - 105, lat - 35), dLng = tLng(lng - 105, lat - 35);
+  const radLat = lat / 180 * Math.PI;
+  let magic = Math.sin(radLat); magic = 1 - ee * magic * magic;
+  const sq = Math.sqrt(magic);
+  dLat = (dLat * 180) / ((a * (1 - ee)) / (magic * sq) * Math.PI);
+  dLng = (dLng * 180) / (a / sq * Math.cos(radLat) * Math.PI);
+  return { lat: lat + dLat, lng: lng + dLng };
+}
+document.getElementById('locate').addEventListener('click', () => {
+  const okEl = document.getElementById('locOk');
+  okEl.style.display = 'none';
+  if (!navigator.geolocation) { alert('当前环境不支持定位（本地文件打开时会被浏览器禁用）。请在线上链接打开本页，或用高德拾取器手动填。'); return; }
+  navigator.geolocation.getCurrentPosition(pos => {
+    const { latitude, longitude, accuracy } = pos.coords;
+    const gcj = wgs2gcj(latitude, longitude);
+    document.getElementById('lng').value = gcj.lng.toFixed(5);
+    document.getElementById('lat').value = gcj.lat.toFixed(5);
+    okEl.textContent = `✅ 已定位并换算为高德坐标（精度约 ${Math.round(accuracy)} 米）。请在高德拾取器里核对一下是否落在你宿舍楼；偏差大就改用手动填。`;
+    okEl.style.display = 'block';
+  }, err => {
+    alert('定位失败：' + err.message + '\n\n常见原因：① 微信内置浏览器受限 → 长按链接用 Safari/Chrome 打开；② 未授权定位 → 浏览器设置里允许本页定位；③ 站在室内深处信号弱 → 靠窗再试或手动填。');
+  }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 });
 });
 
 // —— 推送平台 ——
@@ -154,6 +238,23 @@ document.getElementById('testPush').addEventListener('click', () => {
   fetch(platMeta[plat].url(k), { mode:'no-cors' }).finally(() => {
     document.getElementById('testOk').style.display = 'block';
   });
+});
+
+// —— GitHub 连通性检测 ——
+document.getElementById('ghCheck').addEventListener('click', async () => {
+  const r = document.getElementById('ghCheckResult');
+  r.style.display = 'block';
+  r.textContent = '⏳ 正在测，最多等 6 秒…';
+  const ctl = new AbortController();
+  const t = setTimeout(() => ctl.abort(), 6000);
+  try {
+    await fetch('https://api.github.com/zen?t=' + Date.now(), { signal: ctl.signal, cache: 'no-store' });
+    clearTimeout(t);
+    r.textContent = '✅ 当前网络能直连 GitHub，直接往下走：勾选承诺 → 生成配置 → 按步骤 1~4 操作。';
+  } catch (e) {
+    clearTimeout(t);
+    r.textContent = '❌ 当前网络打不开 GitHub。建议：① 过会儿再试（高峰期容易卡）；② 换校园网或手机热点；③ 有梯子就开着再来——只需要注册+配置这几分钟。';
+  }
 });
 
 // —— 免责声明 → 解锁生成 ——
@@ -214,6 +315,105 @@ document.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click'
     setTimeout(() => b.textContent = b.textContent.replace('✅ 已复制', '📋 复制'), 1500);
   });
 }));
+
+// —— 第 5 步：一键部署 ——
+const SRC_REPO = 'cccccheyu/fzu-auto-checkin';
+const logEl = document.getElementById('log');
+function dlog(msg) {
+  logEl.classList.remove('hide');
+  logEl.textContent += msg + '\n';
+  logEl.scrollTop = logEl.scrollHeight;
+}
+let pat = '';
+async function gh(path, opts = {}, raw = false) {
+  const headers = Object.assign({
+    Authorization: 'Bearer ' + pat,
+    Accept: raw ? 'application/vnd.github.raw' : 'application/vnd.github+json',
+  }, opts.headers || {});
+  const res = await fetch('https://api.github.com' + path, Object.assign({}, opts, { headers }));
+  if (!res.ok) {
+    let detail = '';
+    try { detail = (await res.json()).message || ''; } catch (e) {}
+    throw new Error(`GitHub API ${res.status} ${detail || res.statusText} @ ${opts.method || 'GET'} ${path}`);
+  }
+  return raw ? res.text() : res.json();
+}
+const encPath = p => p.split('/').map(encodeURIComponent).join('/');
+const b64utf8 = s => btoa(unescape(encodeURIComponent(s)));
+
+document.getElementById('deploy').addEventListener('click', async () => {
+  const btn = document.getElementById('deploy');
+  pat = document.getElementById('ghPat').value.trim();
+  const repo = document.getElementById('repoName').value.trim() || 'fzu-auto-checkin';
+  if (!pat) { alert('先粘贴 GitHub Token（第 5 步上面有创建入口）'); return; }
+  if (!/^[A-Za-z0-9_.-]+$/.test(repo)) { alert('仓库名只能包含字母、数字、. _ -'); return; }
+  btn.disabled = true;
+  logEl.textContent = '';
+  logEl.classList.remove('hide');
+  try {
+    dlog('⏳ 第 0 步：整理你的配置…');
+    let yaml;
+    try { yaml = buildYaml(); }
+    catch (e) { throw new Error('第 1~3 步还没填完整（学号密码/坐标），填好后回来点部署'); }
+    dlog('✅ 配置就绪（只会写进你自己的私有仓库）');
+
+    dlog('⏳ 第 1 步：验证 Token…');
+    const me = await gh('/user');
+    dlog('✅ Token 有效，账号：' + me.login);
+
+    dlog('⏳ 第 2 步：创建私有仓库 ' + me.login + '/' + repo + ' …');
+    try {
+      await gh('/user/repos', { method: 'POST', body: JSON.stringify({
+        name: repo, private: true, has_issues: false, has_wiki: false,
+        description: '福大晚点名自动签到（配置生成器部署）'
+      })});
+      dlog('✅ 私有仓库已创建（只有你自己看得到）');
+    } catch (e) {
+      if (/422/.test(String(e))) dlog('ℹ️ 同名仓库已存在，直接复用并更新到最新代码');
+      else throw e;
+    }
+
+    dlog('⏳ 第 3 步：复制项目代码…');
+    const tree = await gh(`/repos/${SRC_REPO}/git/trees/main?recursive=1`);
+    const files = tree.tree.filter(x => x.type === 'blob');
+    dlog(`共 ${files.length} 个文件，开始逐个写入（约 1~3 分钟，别关页面）…`);
+    let done = 0;
+    for (const f of files) {
+      const content = await gh(`/repos/${SRC_REPO}/contents/${encPath(f.path)}`, {}, true);
+      await gh(`/repos/${me.login}/${repo}/contents/${encPath(f.path)}`, {
+        method: 'PUT',
+        body: JSON.stringify({ message: 'deploy: ' + f.path, content: b64utf8(content) })
+      });
+      done++;
+      if (done % 5 === 0 || done === files.length) dlog(`　进度 ${done}/${files.length}`);
+    }
+    dlog('⏳ 写入你的专属配置 config.yaml…');
+    await gh(`/repos/${me.login}/${repo}/contents/config.yaml`, {
+      method: 'PUT',
+      body: JSON.stringify({ message: 'deploy: config.yaml', content: b64utf8(yaml) })
+    });
+    dlog('✅ 代码和配置全部就位');
+
+    const info = await gh(`/repos/${me.login}/${repo}`);
+    dlog('⏳ 第 4 步：手动触发一次签到验证…');
+    try {
+      await gh(`/repos/${me.login}/${repo}/actions/workflows/checkin.yml/dispatches`, {
+        method: 'POST', body: JSON.stringify({ ref: info.default_branch })
+      });
+      dlog('✅ 已触发！1 分钟后到仓库 Actions 页看签到结果');
+    } catch (e) {
+      dlog('ℹ️ 自动触发没成功（不影响定时签到），可到 Actions 页手动 Run workflow 验证');
+    }
+
+    dlog('🎉 部署完成！今晚 21:35 / 21:50 自动开始。Token 建议现在去 GitHub 删掉（Settings → Developer settings → Tokens）。');
+  } catch (e) {
+    dlog('❌ 失败：' + e.message);
+    dlog('常见原因：Token 粘贴有误 / 网络超时（GitHub 国内时好时坏，等会儿点重试一般就过）。');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🚀 重试 / 继续部署';
+  }
+});
 </script>
 </body>
 </html>
