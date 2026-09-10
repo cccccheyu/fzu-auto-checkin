@@ -585,6 +585,12 @@ document.getElementById('deploy').addEventListener('click', async () => {
       if (/422/.test(String(e))) dlog('ℹ️ 同名仓库已存在，直接复用并更新到最新代码');
       else throw e;
     }
+    // 护栏：目标仓库绝不能是公开仓库（配置里含学号密码）
+    const repoInfo = await gh(`/repos/${me.login}/${repo}`);
+    if (!repoInfo.private) {
+      throw new Error(`仓库 ${repoInfo.full_name} 是公开的！配置里含你的学号密码，绝不能写进去。请换个仓库名（默认 fzu-checkin 就行）重新部署。`);
+    }
+    dlog('✅ 确认目标仓库为私有');
 
     dlog('⏳ 第 3 步：复制项目代码…');
     const tree = await gh(`/repos/${SRC_REPO}/git/trees/main?recursive=1`);
@@ -613,11 +619,10 @@ document.getElementById('deploy').addEventListener('click', async () => {
     });
     dlog('✅ 代码和配置全部就位');
 
-    const info = await gh(`/repos/${me.login}/${repo}`);
     dlog('⏳ 第 4 步：手动触发一次签到验证…');
     try {
       await gh(`/repos/${me.login}/${repo}/actions/workflows/checkin.yml/dispatches`, {
-        method: 'POST', body: JSON.stringify({ ref: info.default_branch })
+        method: 'POST', body: JSON.stringify({ ref: repoInfo.default_branch })
       });
       dlog('✅ 已触发！1 分钟后到仓库 Actions 页看签到结果');
     } catch (e) {
@@ -683,6 +688,10 @@ document.getElementById('vacPush').addEventListener('click', async () => {
     if (!repo) repo = me.login + '/' + (document.getElementById('repoName').value.trim() || 'fzu-auto-checkin');
     else if (repo.indexOf('/') === -1) repo = me.login + '/' + repo;
     vlog('✅ 账号 ' + me.login + '，目标仓库 ' + repo);
+    const rinfo = await gh('/repos/' + repo);
+    if (!rinfo.private) {
+      throw new Error('仓库 ' + rinfo.full_name + ' 是公开的！配置里含你的学号密码，绝不能写入。请填你自己的私有签到仓库（如 cccccheyu/fzu-checkin）。');
+    }
 
     vlog('⏳ 读取现有 config.yaml…');
     let cur = null, sha = null;
