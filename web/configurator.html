@@ -516,17 +516,35 @@ function dlog(msg) {
 }
 let pat = '';
 async function gh(path, opts = {}, raw = false) {
-  const headers = Object.assign({
-    Authorization: 'Bearer ' + pat,
-    Accept: raw ? 'application/vnd.github.raw' : 'application/vnd.github+json',
-  }, opts.headers || {});
-  const res = await fetch('https://api.github.com' + path, Object.assign({}, opts, { headers }));
-  if (!res.ok) {
-    let detail = '';
-    try { detail = (await res.json()).message || ''; } catch (e) {}
-    throw new Error(`GitHub API ${res.status} ${detail || res.statusText} @ ${opts.method || 'GET'} ${path}`);
+  const method = (opts.method || 'GET').toUpperCase();
+  // GET/PUT 幂等，网络抖动自动重试；POST 不重试（避免重复建仓库）
+  const retriable = method === 'GET' || method === 'PUT';
+  for (let i = 1; ; i++) {
+    let res;
+    try {
+      const headers = Object.assign({
+        Authorization: 'Bearer ' + pat,
+        Accept: raw ? 'application/vnd.github.raw' : 'application/vnd.github+json',
+      }, opts.headers || {});
+      res = await fetch('https://api.github.com' + path, Object.assign({}, opts, { headers }));
+    } catch (e) {
+      if (!retriable || i >= 3) throw new Error('网络请求失败，GitHub 连不上（国内直连时好时坏）@ ' + method + ' ' + path);
+      dlog(`　⚠️ 网络抖动，自动重试 ${i}/2 …`);
+      await new Promise(r => setTimeout(r, 1500 * i));
+      continue;
+    }
+    if (!res.ok) {
+      if (retriable && res.status >= 500 && i < 3) {
+        dlog(`　⚠️ GitHub ${res.status}，自动重试 ${i}/2 …`);
+        await new Promise(r => setTimeout(r, 1500 * i));
+        continue;
+      }
+      let detail = '';
+      try { detail = (await res.json()).message || ''; } catch (e) {}
+      throw new Error(`GitHub API ${res.status} ${detail || res.statusText} @ ${method} ${path}`);
+    }
+    return raw ? res.text() : res.json();
   }
-  return raw ? res.text() : res.json();
 }
 const encPath = p => p.split('/').map(encodeURIComponent).join('/');
 const b64utf8 = s => btoa(unescape(encodeURIComponent(s)));
@@ -570,6 +588,11 @@ document.getElementById('deploy').addEventListener('click', async () => {
     dlog(`共 ${files.length} 个文件，开始逐个写入（约 1~3 分钟，别关页面）…`);
     let done = 0;
     for (const f of files) {
+      // 断点续传：目标已存在且内容一致(sha 相同)就跳过，重试不用从头再传
+      try {
+        const dest = await gh(`/repos/${me.login}/${repo}/contents/${encPath(f.path)}`);
+        if (dest.sha === f.sha) { done++; continue; }
+      } catch (e) {}
       // 用 contents API 默认 JSON 的 base64 字段直传，文本/二进制(图片)都不损坏
       const info = await gh(`/repos/${SRC_REPO}/contents/${encPath(f.path)}`);
       await gh(`/repos/${me.login}/${repo}/contents/${encPath(f.path)}`, {
@@ -606,7 +629,7 @@ document.getElementById('deploy').addEventListener('click', async () => {
     if (typeof openVacWrite === 'function') openVacWrite();
   } catch (e) {
     dlog('❌ 失败：' + e.message);
-    dlog('常见原因：Token 粘贴有误 / 网络超时（GitHub 国内时好时坏，等会儿点重试一般就过）。');
+    dlog('常见原因：Token 粘贴有误 / 网络超时（GitHub 国内时好时坏）。已传好的文件不会丢——稍等片刻点上面的「重试 / 继续部署」，会从断点接着传。');
   } finally {
     btn.disabled = false;
     btn.textContent = '🚀 重试 / 继续部署';
