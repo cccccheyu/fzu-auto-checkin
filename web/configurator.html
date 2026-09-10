@@ -178,15 +178,20 @@
     <div id="vacList"></div>
     <button class="btn ghost" id="vacAdd" type="button" style="margin-top:8px">＋ 添加一段假期</button>
     <p class="vac-warn" id="vacWarn"></p>
-    <div class="live">
+    <p class="hint" id="vacWriteOpenRow" style="margin-top:12px">🔒 部署之后想补/改假期？<a href="#" id="vacWriteOpen">展开「一键写入」</a>（首次配置不用管，选好的日子已随部署写入）</p>
+    <div class="live hide" id="vacWriteBox">
       <b style="font-size:14px">🚀 一键写入我的仓库</b>
-      <p class="hint" style="margin-top:4px"><b>首次配置不用这步</b>——上面选好的日子已随部署写入。这里只用于部署之后再来补/改：贴一次 Token 点一下，直接改你仓库里的 <code>config.yaml</code>——<b>只替换 <code>vacation:</code> 那一段</b>，你的账号 / 坐标 / 推送设置全部原样保留。</p>
-      <label>GitHub Token</label>
-      <input type="password" id="vacPat" placeholder="粘贴 ghp_ 开头的 token">
-      <p class="hint">没有？<a href="https://github.com/settings/tokens/new?scopes=repo&description=fzu-checkin" target="_blank">点这里创建</a>（勾 <code>repo</code>）。只在点下面按钮时用一次，本页不保存、不上传。</p>
-      <p class="hint hide" id="vacPatTip">✅ 已沿用你刚才在第 5 步填的 Token（只存在本次打开的内存里，关闭页面即清除）。</p>
-      <label>你的私有仓库</label>
-      <input type="text" id="vacRepo" placeholder="如 cccccheyu/fzu-checkin；只填仓库名则默认在你账号下">
+      <p class="hint" id="vacWhyRow" style="margin-top:4px">点一下就把选好的假期写进你仓库的 <code>config.yaml</code>——<b>只替换 <code>vacation:</code> 那一段</b>，账号 / 坐标 / 推送设置全部原样保留。</p>
+      <div id="vacTokRow">
+        <label>GitHub Token</label>
+        <input type="password" id="vacPat" placeholder="粘贴 ghp_ 开头的 token">
+        <p class="hint">没有？<a href="https://github.com/settings/tokens/new?scopes=repo&description=fzu-checkin" target="_blank">点这里创建</a>（勾 <code>repo</code>）。只在点下面按钮时用一次，本页不保存、不上传。</p>
+        <p class="hint hide" id="vacPatTip">✅ 已沿用你刚才在第 5 步填的 Token（只存在本次打开的内存里，关闭页面即清除）。</p>
+      </div>
+      <div id="vacRepoRow">
+        <label>你的私有仓库</label>
+        <input type="text" id="vacRepo" placeholder="如 cccccheyu/fzu-checkin；只填仓库名则默认在你账号下">
+      </div>
       <button class="btn" id="vacPush">🚀 写入 config.yaml</button>
       <pre id="vacLog" class="hide"></pre>
     </div>
@@ -451,6 +456,19 @@ function renderVac(){
 document.getElementById('vacAdd').addEventListener('click',()=>{ vacRow(); renderVac(); });
 vacRow(); renderVac();
 
+// —— 「一键写入」默认收起：首次配置用不到（选好的日子已随部署写入）——
+const vacWriteBox = document.getElementById('vacWriteBox');
+const vacWriteOpenRow = document.getElementById('vacWriteOpenRow');
+function openVacWrite(){
+  vacWriteBox.classList.remove('hide');
+  vacWriteOpenRow.style.display = 'none';
+  // 能自动带出的就不再问（面向对象隐藏）：Token 还在内存（刚部署过）→ 藏 Token 行；
+  // 仓库名有本机记忆 → 藏仓库行。剩下的就是"点一下按钮"。
+  document.getElementById('vacTokRow').style.display = pat ? 'none' : '';
+  document.getElementById('vacRepoRow').style.display = document.getElementById('vacRepo').value ? 'none' : '';
+}
+document.getElementById('vacWriteOpen').addEventListener('click', e => { e.preventDefault(); openVacWrite(); });
+
 // —— 复制按钮 ——
 document.querySelectorAll('[data-copy]').forEach(b => {
   const label = b.textContent;
@@ -563,6 +581,8 @@ document.getElementById('deploy').addEventListener('click', async () => {
       const tip = document.getElementById('vacPatTip');
       if (tip) tip.classList.remove('hide');
     }
+    // 部署成功 = 已经有仓库了，自动展开「一键写入」，以后补假期点一下就行
+    if (typeof openVacWrite === 'function') openVacWrite();
   } catch (e) {
     dlog('❌ 失败：' + e.message);
     dlog('常见原因：Token 粘贴有误 / 网络超时（GitHub 国内时好时坏，等会儿点重试一般就过）。');
