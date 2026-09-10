@@ -61,22 +61,14 @@
   .vnote { display:none; font-size:11px; color:#b91c1c; margin-top:6px; }
   .vac-warn { display:none; font-size:12px; color:#b91c1c; margin-top:8px; }
   .live { margin-top:16px; padding-top:14px; border-top:1px dashed var(--line); }
+  /* 分享给同学 */
+  input[readonly] { background:#f1f3f9; color:var(--sub); }
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>🎓 福大晚点名自动签到 · 配置生成器</h1>
   <p class="sub">全程在你的浏览器里完成，任何信息都不会上传。填完 1~3 步后，按你有没有 GitHub 账号二选一。</p>
-
-  <!-- 痛点 -->
-  <div class="card">
-    <h2>😵 这说的是你吗？</h2>
-    <div class="pain">21:30 的晚点名，忙着作业 / 游戏 / 睡着了，一晃就过点 → <b>迟到缺勤通报</b></div>
-    <div class="pain">天天定闹钟提醒自己，还得掏出手机打开 App 手动点一遍</div>
-    <div class="sol"><b>✅ 配置一次，一学期清净</b>：在校的每晚 21:35 / 21:50 云端自动签到；寒暑假自动跳过，实训 / 调休等不用签的日子也能自己加区间，<b>绝不替你补签</b></div>
-    <div class="sol"><b>✅ 不打扰</b>：默认静默完成；想知道结果，可推送到微信 / iPhone</div>
-    <div class="sol"><b>✅ 不经手任何第三方</b>：凭据只进你自己的私有仓库</div>
-  </div>
 
   <!-- 第 1 步 账号 -->
   <div class="card">
@@ -101,13 +93,16 @@
   <!-- 第 2 步 位置 -->
   <div class="card">
     <h2><span class="step">2</span>签到位置（你在校区内的宿舍楼）</h2>
-    <button class="btn ghost" id="locate">📍 自动获取当前位置（人在宿舍时点最准）</button>
+    <button class="btn ghost" id="locate">📍 获取当前位置（人在宿舍时点，最准）</button>
     <p class="ok-msg" id="locOk"></p>
-    <p class="hint" style="margin:6px 0 10px">或手动获取：<a href="https://lbs.amap.com/tools/picker" target="_blank">高德坐标拾取器</a> → 搜索宿舍楼 → 把"经度,纬度"分别填到下面两格</p>
-    <div class="row">
-      <div><label>经度 longitude</label><input type="text" id="lng" placeholder="119.xxxxx"></div>
-      <div><label>纬度 latitude</label><input type="text" id="lat" placeholder="26.xxxxx"></div>
+    <div id="coordBox" class="hide">
+      <div class="row">
+        <div><label>经度 longitude（已自动填好）</label><input type="text" id="lng" readonly placeholder="119.xxxxx"></div>
+        <div><label>纬度 latitude（已自动填好）</label><input type="text" id="lat" readonly placeholder="26.xxxxx"></div>
+      </div>
+      <p class="hint">想核对坐标是否就在你宿舍楼：<a href="https://lbs.amap.com/tools/picker" target="_blank">高德坐标拾取器</a>里搜一下。</p>
     </div>
+    <p class="hint" id="coordFallback" style="display:none">定位不成功？<a href="#" id="coordManual">手动填写坐标</a>（格式 119.xxxxx / 26.xxxxx）</p>
     <label>地址文案（打卡记录里显示的）</label>
     <input type="text" id="addr" placeholder="如 福州大学旗山校区生活区X号楼">
     <p class="hint">浏览器定位需授权且要求 HTTPS：微信内打不开时，用 Safari/Chrome 打开本页。工具不伪造定位。</p>
@@ -189,22 +184,21 @@
     <div id="vacList"></div>
     <button class="btn ghost" id="vacAdd" type="button" style="margin-top:8px">＋ 添加一段假期</button>
     <p class="vac-warn" id="vacWarn"></p>
-    <label style="margin-top:12px">生成的配置（整段替换你仓库里 <code>config.yaml</code> 的 <code>vacation:</code> 段）</label>
+    <div class="live">
+      <b style="font-size:14px">🚀 一键写入我的仓库（推荐）</b>
+      <p class="hint" style="margin-top:4px">贴一次 Token 点一下，直接改你仓库里的 <code>config.yaml</code>——<b>只替换 <code>vacation:</code> 那一段</b>，你的账号 / 坐标 / 推送设置全部原样保留，不用自己去 GitHub 改。</p>
+      <label>GitHub Token</label>
+      <input type="password" id="vacPat" placeholder="粘贴 ghp_ 开头的 token">
+      <p class="hint">没有？<a href="https://github.com/settings/tokens/new?scopes=repo&description=fzu-checkin" target="_blank">点这里创建</a>（勾 <code>repo</code>）。只在点下面按钮时用一次，本页不保存、不上传。</p>
+      <label>你的私有仓库</label>
+      <input type="text" id="vacRepo" placeholder="如 cccccheyu/fzu-checkin；只填仓库名则默认在你账号下">
+      <button class="btn" id="vacPush">🚀 写入 config.yaml</button>
+      <pre id="vacLog" class="hide"></pre>
+    </div>
+    <label style="margin-top:18px">或者手动改：生成的配置（整段替换你仓库里 <code>config.yaml</code> 的 <code>vacation:</code> 段）</label>
     <textarea id="vacOut" readonly style="height:150px"></textarea>
     <button class="btn ghost" data-copy="vacOut">📋 复制这段配置</button>
-    <p class="hint">手动方式：复制后贴到 GitHub 上你仓库的 <code>config.yaml</code>，点 <b>Commit changes</b> 保存。<b>假期是跳过不签，绝不会替你补签。</b></p>
-    <div class="live">
-      <label class="chk" style="margin-top:0"><input type="checkbox" id="vacLiveOn"><span>懒人模式：<b>一键写入我的仓库</b>，不用手动去 GitHub 改</span></label>
-      <div id="vacLiveBox" class="hide">
-        <label>GitHub Token</label>
-        <input type="password" id="vacPat" placeholder="粘贴 ghp_ 开头的 token">
-        <p class="hint">没有？<a href="https://github.com/settings/tokens/new?scopes=repo&description=fzu-checkin" target="_blank">点这里创建</a>（勾 <code>repo</code>）。只在点下面按钮时用一次，本页不保存、不上传。</p>
-        <label>你的私有仓库</label>
-        <input type="text" id="vacRepo" placeholder="如 cccccheyu/fzu-checkin；只填仓库名则默认在你账号下">
-        <button class="btn" id="vacPush">🚀 写入 config.yaml</button>
-        <pre id="vacLog" class="hide"></pre>
-      </div>
-    </div>
+    <p class="hint">复制后贴到 GitHub 上你仓库的 <code>config.yaml</code>，点 <b>Commit changes</b> 保存。<b>假期是跳过不签，绝不会替你补签。</b></p>
     <div style="display:flex;gap:14px;align-items:center;margin-top:16px;padding-top:14px;border-top:1px dashed var(--line)">
       <img src="qr.png" alt="本页二维码" style="width:112px;height:112px;border:1px solid var(--line);border-radius:10px;background:#fff;padding:4px">
       <div class="hint" style="margin:0">💡 <b>建议把这个二维码 / 本页链接存下来</b><br>以后要补假期，扫码回到本页。<b>上次填过的内容会自动带出来</b>，改改日期、复制走就行——不用重新配整个流程。</div>
@@ -289,18 +283,29 @@ function wgs2gcj(lat, lng) {
 }
 document.getElementById('locate').addEventListener('click', () => {
   const okEl = document.getElementById('locOk');
-  okEl.style.display = 'none';
-  if (!navigator.geolocation) { alert('当前环境不支持定位（本地文件打开时会被浏览器禁用）。请在线上链接打开本页，或用高德拾取器手动填。'); return; }
+  const fb = document.getElementById('coordFallback');
+  okEl.style.display = 'none'; fb.style.display = 'none';
+  if (!navigator.geolocation) { fb.style.display = 'block'; alert('当前环境不支持定位（用本地文件打开时浏览器会禁用）。请在线上链接打开本页。'); return; }
   navigator.geolocation.getCurrentPosition(pos => {
     const { latitude, longitude, accuracy } = pos.coords;
     const gcj = wgs2gcj(latitude, longitude);
     document.getElementById('lng').value = gcj.lng.toFixed(5);
     document.getElementById('lat').value = gcj.lat.toFixed(5);
-    okEl.textContent = `✅ 已定位并换算为高德坐标（精度约 ${Math.round(accuracy)} 米）。请在高德拾取器里核对一下是否落在你宿舍楼；偏差大就改用手动填。`;
+    document.getElementById('coordBox').classList.remove('hide');
+    okEl.textContent = `✅ 已定位并换算为高德坐标（精度约 ${Math.round(accuracy)} 米），坐标已自动填好。`;
     okEl.style.display = 'block';
   }, err => {
-    alert('定位失败：' + err.message + '\n\n常见原因：① 微信内置浏览器受限 → 长按链接用 Safari/Chrome 打开；② 未授权定位 → 浏览器设置里允许本页定位；③ 站在室内深处信号弱 → 靠窗再试或手动填。');
+    fb.style.display = 'block';
+    alert('定位失败：' + err.message + '\n\n常见原因：① 微信内置浏览器受限 → 长按链接用 Safari/Chrome 打开；② 未授权定位 → 浏览器设置里允许本页定位；③ 站在室内深处信号弱 → 靠窗再试。也可以点下面的「手动填写坐标」。');
   }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 });
+});
+// 定位失败时的手动兜底：点开才变成可填
+const coordManual = document.getElementById('coordManual');
+if (coordManual) coordManual.addEventListener('click', e => {
+  e.preventDefault();
+  document.getElementById('coordBox').classList.remove('hide');
+  ['lng', 'lat'].forEach(id => document.getElementById(id).removeAttribute('readonly'));
+  document.getElementById('lng').focus();
 });
 
 // —— 推送平台 ——
@@ -451,13 +456,16 @@ document.getElementById('vacAdd').addEventListener('click',()=>{ vacRow(); rende
 vacRow(); renderVac();
 
 // —— 复制按钮 ——
-document.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', () => {
-  const t = document.getElementById(b.dataset.copy);
-  navigator.clipboard.writeText(t.value).then(() => {
-    b.textContent = '✅ 已复制';
-    setTimeout(() => b.textContent = b.textContent.replace('✅ 已复制', '📋 复制'), 1500);
+document.querySelectorAll('[data-copy]').forEach(b => {
+  const label = b.textContent;
+  b.addEventListener('click', () => {
+    const t = document.getElementById(b.dataset.copy);
+    navigator.clipboard.writeText(t.value).then(() => {
+      b.textContent = '✅ 已复制';
+      setTimeout(() => { b.textContent = label; }, 1500);
+    });
   });
-}));
+});
 
 // —— 第 5 步：一键部署 ——
 const SRC_REPO = 'cccccheyu/fzu-auto-checkin';
@@ -567,9 +575,6 @@ function vlog(msg){
   vacLogEl.textContent += msg + '\n';
   vacLogEl.scrollTop = vacLogEl.scrollHeight;
 }
-document.getElementById('vacLiveOn').addEventListener('change', e => {
-  document.getElementById('vacLiveBox').classList.toggle('hide', !e.target.checked);
-});
 
 // 把文本里顶层 vacation: 段整段换掉；原来没有就追加到末尾
 function replaceVacation(text, block){
@@ -660,6 +665,7 @@ function memRestore(){
   const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
   set('lng', m.lng); set('lat', m.lat); set('addr', m.addr);
   set('repoName', m.repo); set('vacRepo', m.vacRepo);
+  if (m.lng && m.lat) document.getElementById('coordBox').classList.remove('hide');
   if (m.plat && m.plat !== 'none') {
     const r = document.querySelector('input[name=plat][value="' + m.plat + '"]');
     if (r) r.click();

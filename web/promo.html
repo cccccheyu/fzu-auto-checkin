@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>福大晚点名自动签到 · 宣传卡</title>
+<style>
+  :root { --brand:#4f6ef2; --bg:#f6f7fb; --card:#fff; --line:#e5e8f0; --txt:#1c2333; --sub:#6b7280; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background:var(--bg); color:var(--txt); line-height:1.65; padding:18px 12px 40px; }
+  .card { max-width:520px; margin:0 auto; background:var(--card); border:1px solid var(--line); border-radius:16px; padding:22px 20px; box-shadow:0 6px 24px rgba(28,35,51,.06); }
+  .kicker { font-size:12px; color:var(--sub); letter-spacing:.06em; }
+  h1 { font-size:25px; margin:4px 0 6px; letter-spacing:.01em; }
+  .tagline { font-size:15px; color:#3d4658; }
+  .badges { display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; }
+  .badges span { font-size:11px; color:var(--brand); background:#eef1fe; border-radius:999px; padding:3px 9px; }
+  hr { border:none; border-top:1px dashed var(--line); margin:18px 0; }
+  h2 { font-size:15px; margin-bottom:8px; }
+  .pain { font-size:14px; background:#fef2f2; color:#7f1d1d; border-radius:9px; padding:9px 12px; margin-top:8px; }
+  .sol { font-size:14px; background:#f0fdf4; color:#14532d; border-radius:9px; padding:9px 12px; margin-top:8px; }
+  .sol b { color:#166534; }
+  .qrbox { text-align:center; margin-top:20px; }
+  .qrbox img { width:170px; height:170px; border:1px solid var(--line); border-radius:12px; background:#fff; padding:6px; }
+  .qrbox p { font-size:13px; color:var(--sub); margin-top:8px; }
+  .btn { display:block; width:100%; padding:13px 0; border:none; border-radius:11px; background:var(--brand); color:#fff; font-size:16px; cursor:pointer; text-align:center; text-decoration:none; margin-top:14px; }
+  .btn.ghost { background:#eef1fe; color:var(--brand); font-size:14px; padding:10px 0; margin-top:10px; }
+  input[type=text] { width:100%; padding:9px 12px; border:1px solid var(--line); border-radius:8px; font-size:13px; background:#fbfcfe; color:var(--sub); margin-top:10px; text-align:center; }
+  .note { font-size:12px; color:var(--sub); text-align:center; margin-top:16px; line-height:1.8; }
+  .note a { color:var(--brand); }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="kicker">福州大学 · 智汇福大</div>
+  <h1>晚点名自动签到</h1>
+  <p class="tagline">配置一次，一学期晚上不用管。</p>
+  <div class="badges">
+    <span>开源免费</span><span>每晚 21:35 自动签到</span><span>凭据只进你自己的仓库</span>
+  </div>
+
+  <hr>
+
+  <h2>😵 这说的是你吗？</h2>
+  <div class="pain">21:30 的晚点名，忙着作业 / 游戏 / 睡着了，一晃就过点 → <b>迟到缺勤通报</b></div>
+  <div class="pain">天天定闹钟提醒自己，还得掏出手机打开 App 手动点一遍</div>
+
+  <h2 style="margin-top:16px">✅ 配好之后</h2>
+  <div class="sol"><b>配置一次，一学期清净</b>：在校的每晚 21:35 / 21:50 云端自动签到</div>
+  <div class="sol"><b>寒暑假自动跳过</b>：实训 / 调休等不用签的日子也能自己加区间，<b>绝不替你补签</b></div>
+  <div class="sol"><b>不打扰</b>：默认静默完成；想知道结果，可推送到微信 / iPhone</div>
+  <div class="sol"><b>不经手任何第三方</b>：凭据只进你自己的私有仓库</div>
+
+  <div class="qrbox">
+    <img src="qr.png" alt="配置页二维码">
+    <p>扫码开始配置，5 分钟搞定</p>
+  </div>
+
+  <a class="btn" id="openBtn" href="https://ab29158412654ce793c6cea3134abfb9.app.workbuddy.link" target="_blank">👉 打开配置页</a>
+  <input type="text" id="cfgLink" readonly value="https://ab29158412654ce793c6cea3134abfb9.app.workbuddy.link">
+  <button class="btn ghost" data-copy="cfgLink">📋 复制配置页链接，发群里</button>
+
+  <p class="note">仅限本人确实在校时使用 · 不用于隐瞒在/离校状态 · 不用于代挂<br>开源项目 <a href="https://github.com/cccccheyu/fzu-auto-checkin" target="_blank">fzu-auto-checkin</a> · 反馈：inspring_2026@163.com</p>
+</div>
+<script>
+  document.querySelectorAll('[data-copy]').forEach(b => {
+    const label = b.textContent;
+    b.addEventListener('click', () => {
+      const t = document.getElementById(b.dataset.copy);
+      navigator.clipboard.writeText(t.value).then(() => {
+        b.textContent = '✅ 已复制';
+        setTimeout(() => { b.textContent = label; }, 1500);
+      });
+    });
+  });
+</script>
+</body>
+</html>
