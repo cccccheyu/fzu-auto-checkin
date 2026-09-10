@@ -174,13 +174,13 @@
   <!-- 后续维护：补充假期 -->
   <div class="card">
     <h2>🌴 后续补假期（不用签的日子）</h2>
-    <p class="hint">寒暑假已按《福州大学 2026—2027 学年校历》（福大教〔2026〕10号）写在下面生成的配置里，不用管。法定节假日、军训、调休、请假离校等日子在这里补：<b>只选起止日期</b>就行，格式会自动统一。</p>
+    <p class="hint">寒暑假已按《福州大学 2026—2027 学年校历》（福大教〔2026〕10号）预填好；法定节假日、军训、调休、请假离校等日子点「添加一段假期」补上——<b>选好的日子会直接包含在生成的配置里</b>，一键部署后即生效。</p>
     <div id="vacList"></div>
     <button class="btn ghost" id="vacAdd" type="button" style="margin-top:8px">＋ 添加一段假期</button>
     <p class="vac-warn" id="vacWarn"></p>
     <div class="live">
       <b style="font-size:14px">🚀 一键写入我的仓库</b>
-      <p class="hint" style="margin-top:4px">贴一次 Token 点一下，直接改你仓库里的 <code>config.yaml</code>——<b>只替换 <code>vacation:</code> 那一段</b>，你的账号 / 坐标 / 推送设置全部原样保留，不用自己去 GitHub 改。</p>
+      <p class="hint" style="margin-top:4px"><b>首次配置不用这步</b>——上面选好的日子已随部署写入。这里只用于部署之后再来补/改：贴一次 Token 点一下，直接改你仓库里的 <code>config.yaml</code>——<b>只替换 <code>vacation:</code> 那一段</b>，你的账号 / 坐标 / 推送设置全部原样保留。</p>
       <label>GitHub Token</label>
       <input type="password" id="vacPat" placeholder="粘贴 ghp_ 开头的 token">
       <p class="hint">没有？<a href="https://github.com/settings/tokens/new?scopes=repo&description=fzu-checkin" target="_blank">点这里创建</a>（勾 <code>repo</code>）。只在点下面按钮时用一次，本页不保存、不上传。</p>
@@ -196,7 +196,7 @@
       <img src="qr.png" alt="本页二维码" style="width:112px;height:112px;border:1px solid var(--line);border-radius:10px;background:#fff;padding:4px">
       <div class="hint" style="margin:0">💡 <b>建议把这个二维码 / 本页链接存下来</b><br>以后要补假期，扫码回到本页。<b>上次填过的内容会自动带出来</b>，改改日期、点一下写入就行——不用重新配整个流程。</div>
     </div>
-    <p class="hint">💾 本页会把你在<b>这台设备的浏览器</b>里填过的内容记下来（坐标、地址、假期区间、仓库名），下次打开自动带出。<b>密码 / token / PAT 一律不记、不上传。</b>想清空：<a href="#" id="memClear">清空本机记忆</a></p>
+    <p class="hint">💾 本页会把你在<b>这台设备的浏览器</b>里填过的内容记下来（坐标、假期区间、仓库名），下次打开自动带出。<b>密码 / token / PAT 一律不记、不上传。</b>想清空：<a href="#" id="memClear">清空本机记忆</a></p>
   </div>
 
   <!-- 意见反馈 -->
@@ -387,12 +387,7 @@ checkin:
 vacation:
   notify: false
   skip_ranges:
-    - name: 寒假
-      start: "2027-01-23"
-      end: "2027-02-21"
-    - name: 暑假
-      start: "2027-07-03"
-      end: "2027-08-29"
+${vacPreset().concat(vacCustomLines().lines).join('\n')}
 
 ${platCfg || 'notify:\n  type: "none"'}`;
 }
@@ -422,7 +417,15 @@ function vacRow(name='', s='', e=''){
   vacList.appendChild(d);
   return d;
 }
-function renderVac(){
+// 校历默认区间（福大教〔2026〕10号）；与 config.example.yaml 保持一致
+function vacPreset(){
+  return [
+    '    - name: 寒假\n      start: "2027-01-23"\n      end: "2027-02-21"',
+    '    - name: 暑假\n      start: "2027-07-03"\n      end: "2027-08-29"'
+  ];
+}
+// 选择器里用户补的自定义区间（无效行跳过并计数）
+function vacCustomLines(){
   const lines=[]; let bad=0;
   vacList.querySelectorAll('.vac-item').forEach(r=>{
     const n=r.querySelector('.vname').value.trim();
@@ -436,12 +439,12 @@ function renderVac(){
     r.classList.toggle('bad', invalid);
     r.querySelector('.vnote').style.display = invalid ? 'block' : 'none';
   });
-  const preset = [
-    '    - name: 寒假\n      start: "2027-01-23"\n      end: "2027-02-21"',
-    '    - name: 暑假\n      start: "2027-07-03"\n      end: "2027-08-29"'
-  ];
+  return { lines, bad };
+}
+function renderVac(){
+  const { lines, bad } = vacCustomLines();
   document.getElementById('vacOut').value =
-    'vacation:\n  notify: false\n  skip_ranges:\n' + preset.concat(lines).join('\n');
+    'vacation:\n  notify: false\n  skip_ranges:\n' + vacPreset().concat(lines).join('\n');
   vacWarn.style.display = bad ? 'block' : 'none';
   vacWarn.textContent = bad ? '⚠️ 有 '+bad+' 段日期没填全、或开始晚于结束，已跳过、不会写入配置。' : '';
 }
