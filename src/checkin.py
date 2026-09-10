@@ -10,6 +10,7 @@
 """
 
 import base64
+import datetime
 import json
 import urllib.parse
 
@@ -20,6 +21,16 @@ from Crypto.Util.Padding import pad, unpad
 BASE_URL = "https://yzsxg.fzu.edu.cn"
 API_PREFIX = "/livecloud/project/fzu/attn"
 AES_KEY = b"apexinfoapexinfo"  # KEY == IV（前端源码硬编码）
+
+# GitHub Actions 跑在 UTC，迟到判定必须按北京时间算，不能用运行环境本地时间
+TZ_CN = datetime.timezone(datetime.timedelta(hours=8), "Asia/Shanghai")
+
+
+def beijing_now(ts_ms=None) -> datetime.datetime:
+    """服务器时间戳(毫秒) → 北京时间；没有则取当前北京时间。"""
+    if ts_ms:
+        return datetime.datetime.fromtimestamp(ts_ms / 1000, TZ_CN)
+    return datetime.datetime.now(TZ_CN)
 
 UA = (
     "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 "
@@ -127,8 +138,6 @@ def query_today_task(client: AttnClient, cfg: dict) -> dict:
 
 def do_checkin(client: AttnClient, cfg: dict, init_data: dict) -> bool:
     """按 init 数据 + 配置定位完成 check → clockIn 全链路。"""
-    import datetime
-
     user = init_data["userData"]
     params = init_data["paramsData"]
     longitude = float(cfg["checkin"]["longitude"])
@@ -145,9 +154,9 @@ def do_checkin(client: AttnClient, cfg: dict, init_data: dict) -> bool:
     if not matched:
         return False
 
-    # 2. 迟到判定：以服务器时间为准，与 FLateTime（迟到线）比较
+    # 2. 迟到判定：以服务器时间为准（换算成北京时间），与 FLateTime（迟到线）比较
     ts = client.server_time()
-    now = datetime.datetime.fromtimestamp(ts / 1000) if ts else datetime.datetime.now()
+    now = beijing_now(ts)
     late_line = (params.get("FLateTime") or params.get("FEndTime") or "23:59").strip()
     try:
         h, m = map(int, late_line.split(":")[:2])
