@@ -2,6 +2,8 @@
 
 ![License](https://img.shields.io/github/license/cccccheyu/fzu-auto-checkin) ![Python](https://img.shields.io/badge/python-3.11+-blue) ![GitHub Actions](https://img.shields.io/badge/cron-21%3A35%20%2F%2021%3A50-green)
 
+<div align="center"><img src="assets/fzu-checkin-poster.png" width="420" alt="晚点名自动签到宣传图"></div>
+
 福州大学「智汇福大」晚点名（21:30–23:59）的自动签到工具：**每晚定时自动打卡，结果微信推送**。手机零安装，iOS / 安卓都能用。
 
 > ⚠️ **使用须知**
