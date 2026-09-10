@@ -381,6 +381,10 @@ document.getElementById('ghCheck').addEventListener('click', async () => {
 document.getElementById('agree').addEventListener('change', e => {
   document.getElementById('gen').disabled = !e.target.checked;
 });
+// 第 5 步承诺勾选 → 解锁一键部署
+document.getElementById('agree2').addEventListener('change', e => {
+  document.getElementById('deploy').disabled = !e.target.checked;
+});
 
 // —— 生成 ——
 document.getElementById('gen').addEventListener('click', () => {
