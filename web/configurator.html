@@ -186,7 +186,6 @@
         <label>GitHub Token</label>
         <input type="password" id="vacPat" placeholder="粘贴 ghp_ 开头的 token">
         <p class="hint">没有？<a href="https://github.com/settings/tokens/new?scopes=repo&description=fzu-checkin" target="_blank">点这里创建</a>（勾 <code>repo</code>）。只在点下面按钮时用一次，本页不保存、不上传。</p>
-        <p class="hint hide" id="vacPatTip">✅ 已沿用你刚才在第 5 步填的 Token（只存在本次打开的内存里，关闭页面即清除）。</p>
       </div>
       <div id="vacRepoRow">
         <label>你的私有仓库</label>
@@ -576,11 +575,7 @@ document.getElementById('deploy').addEventListener('click', async () => {
 
     // 补假期复用同一个 Token：只存在本次打开的内存里，不落盘、不上传
     const vp = document.getElementById('vacPat');
-    if (vp && !vp.value) {
-      vp.value = pat;
-      const tip = document.getElementById('vacPatTip');
-      if (tip) tip.classList.remove('hide');
-    }
+    if (vp && !vp.value) vp.value = pat;
     // 部署成功 = 已经有仓库了，自动展开「一键写入」，以后补假期点一下就行
     if (typeof openVacWrite === 'function') openVacWrite();
   } catch (e) {
