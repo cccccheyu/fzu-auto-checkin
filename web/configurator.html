@@ -99,8 +99,6 @@
       <p class="hint">想核对坐标是否就在你宿舍楼：<a href="https://lbs.amap.com/tools/picker" target="_blank">高德坐标拾取器</a>里搜一下。</p>
     </div>
     <p class="hint" id="coordFallback" style="display:none">定位不成功？<a href="#" id="coordManual">手动填写坐标</a>（格式 119.xxxxx / 26.xxxxx）</p>
-    <label>地址文案（选填，打卡记录里显示；留空默认「福州大学旗山校区」）</label>
-    <input type="text" id="addr" placeholder="如 福州大学旗山校区生活区X号楼">
     <p class="hint">浏览器定位需授权且要求 HTTPS：微信内打不开时，用 Safari/Chrome 打开本页。工具不伪造定位。</p>
   </div>
 
@@ -384,7 +382,7 @@ ${user}
 checkin:
   longitude: "${v('lng')}"
   latitude: "${v('lat')}"
-  actual_location: "${v('addr') || '福州大学旗山校区'}"
+  actual_location: "福州大学旗山校区"
 
 vacation:
   notify: false
@@ -657,7 +655,7 @@ function memSave(){
       end: r.querySelector('.vend').value
     }));
     localStorage.setItem(MEM_KEY, JSON.stringify({
-      lng: v('lng'), lat: v('lat'), addr: v('addr'),
+      lng: v('lng'), lat: v('lat'),
       plat: (document.querySelector('input[name=plat]:checked') || {}).value || 'none',
       repo: v('repoName'), vacRepo: v('vacRepo'), vac: vac
     }));
@@ -666,7 +664,7 @@ function memSave(){
 function memRestore(){
   const m = memLoad();
   const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
-  set('lng', m.lng); set('lat', m.lat); set('addr', m.addr);
+  set('lng', m.lng); set('lat', m.lat);
   set('repoName', m.repo); set('vacRepo', m.vacRepo);
   if (m.lng && m.lat) document.getElementById('coordBox').classList.remove('hide');
   if (m.plat && m.plat !== 'none') {
