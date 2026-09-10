@@ -181,7 +181,7 @@
     <button class="btn ghost" id="vacAdd" type="button" style="margin-top:8px">＋ 添加一段假期</button>
     <p class="vac-warn" id="vacWarn"></p>
     <div class="live">
-      <b style="font-size:14px">🚀 一键写入我的仓库（推荐）</b>
+      <b style="font-size:14px">🚀 一键写入我的仓库</b>
       <p class="hint" style="margin-top:4px">贴一次 Token 点一下，直接改你仓库里的 <code>config.yaml</code>——<b>只替换 <code>vacation:</code> 那一段</b>，你的账号 / 坐标 / 推送设置全部原样保留，不用自己去 GitHub 改。</p>
       <label>GitHub Token</label>
       <input type="password" id="vacPat" placeholder="粘贴 ghp_ 开头的 token">
@@ -192,16 +192,11 @@
       <button class="btn" id="vacPush">🚀 写入 config.yaml</button>
       <pre id="vacLog" class="hide"></pre>
     </div>
-    <p class="hint" style="margin-top:14px"><b>假期是跳过不签，绝不会替你补签。</b>不想贴 Token？<a href="#" id="vacManual">改成手动复制，自己去 GitHub 改</a></p>
-    <div id="vacManualBox" class="hide">
-      <label>生成的配置（整段替换你仓库里 <code>config.yaml</code> 的 <code>vacation:</code> 段）</label>
-      <textarea id="vacOut" readonly style="height:150px"></textarea>
-      <button class="btn ghost" data-copy="vacOut">📋 复制这段配置</button>
-      <p class="hint">复制后贴到 GitHub 上你仓库的 <code>config.yaml</code>，点 <b>Commit changes</b> 保存。</p>
-    </div>
+    <p class="hint" style="margin-top:14px"><b>假期是跳过不签，绝不会替你补签。</b></p>
+    <textarea id="vacOut" class="hide" readonly></textarea>
     <div style="display:flex;gap:14px;align-items:center;margin-top:16px;padding-top:14px;border-top:1px dashed var(--line)">
       <img src="qr.png" alt="本页二维码" style="width:112px;height:112px;border:1px solid var(--line);border-radius:10px;background:#fff;padding:4px">
-      <div class="hint" style="margin:0">💡 <b>建议把这个二维码 / 本页链接存下来</b><br>以后要补假期，扫码回到本页。<b>上次填过的内容会自动带出来</b>，改改日期、复制走就行——不用重新配整个流程。</div>
+      <div class="hint" style="margin:0">💡 <b>建议把这个二维码 / 本页链接存下来</b><br>以后要补假期，扫码回到本页。<b>上次填过的内容会自动带出来</b>，改改日期、点一下写入就行——不用重新配整个流程。</div>
     </div>
     <p class="hint">💾 本页会把你在<b>这台设备的浏览器</b>里填过的内容记下来（坐标、地址、假期区间、仓库名），下次打开自动带出。<b>密码 / token / PAT 一律不记、不上传。</b>想清空：<a href="#" id="memClear">清空本机记忆</a></p>
   </div>
@@ -600,13 +595,6 @@ function replaceVacation(text, block){
   }
   return lines.slice(0, start).concat(block.split('\n')).concat(lines.slice(end)).join('\n');
 }
-
-// 手动复制是备选路径：默认收起，点小字才展开
-const vacManual = document.getElementById('vacManual');
-if (vacManual) vacManual.addEventListener('click', e => {
-  e.preventDefault();
-  document.getElementById('vacManualBox').classList.remove('hide');
-});
 
 document.getElementById('vacPush').addEventListener('click', async () => {
   const btn = document.getElementById('vacPush');
