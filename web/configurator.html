@@ -176,7 +176,7 @@
   <!-- 后续维护：补充假期 -->
   <div class="card">
     <h2>🌴 后续补假期（不用签的日子）</h2>
-    <p class="hint">寒暑假已按《福州大学 2026—2027 学年校历》（福大教〔2026〕10号）写在下面生成的配置里，不用管。法定节假日、实训、调休、请假离校等日子在这里补：<b>只选起止日期</b>就行，格式会自动统一。</p>
+    <p class="hint">寒暑假已按《福州大学 2026—2027 学年校历》（福大教〔2026〕10号）写在下面生成的配置里，不用管。法定节假日、军训、调休、请假离校等日子在这里补：<b>只选起止日期</b>就行，格式会自动统一。</p>
     <div id="vacList"></div>
     <button class="btn ghost" id="vacAdd" type="button" style="margin-top:8px">＋ 添加一段假期</button>
     <p class="vac-warn" id="vacWarn"></p>
@@ -412,7 +412,7 @@ function vacRow(name='', s='', e=''){
   d.className='vac-item';
   d.innerHTML =
     '<div class="vac-head">' +
-      '<input type="text" class="vname" placeholder="名称（如 实训 / 调休）" value="'+name+'">' +
+      '<input type="text" class="vname" placeholder="名称（如 军训 / 调休）" value="'+name+'">' +
       '<button type="button" class="vdel" title="删除这条">✕</button>' +
     '</div>' +
     '<div class="row">' +
