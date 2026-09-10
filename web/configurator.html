@@ -163,7 +163,7 @@
     <p class="hint">贴一个 Token 就行：自动替你创建<b>私有仓库</b>、写入全部代码和你的配置，之后每晚 21:35 / 21:50 自动签到。凭据只存在你自己的私有仓库里，不经过任何第三方服务器。</p>
     <label>GitHub Token</label>
     <input type="password" id="ghPat" placeholder="粘贴 ghp_ 开头的 token">
-    <p class="hint">没有？<a href="https://github.com/settings/tokens/new?scopes=repo&description=fzu-checkin" target="_blank">点这里创建</a>——直达创建表单（未登录会先让你登录；中途若要求输入 GitHub 密码确认一次，属正常安全校验）。<code>repo</code> 权限已自动勾好。三步：① <b>Expiration 选 No expiration</b>——默认只有 30 天，到期后「一键写入」会静默失效；② 拉到页面底部点绿色 <b>Generate token</b>；③ 页面出现 <code>ghp_</code> 开头的 token，点旁边的复制按钮（<b>只显示这一次</b>）→ 粘贴过来。部署完成后建议删除该 token。</p>
+    <p class="hint">没有？<a href="https://github.com/settings/tokens/new?scopes=repo,workflow&description=fzu-checkin" target="_blank">点这里创建</a>——直达创建表单（未登录会先让你登录；中途若要求输入 GitHub 密码确认一次，属正常安全校验）。<code>repo</code>、<code>workflow</code> 两项权限已自动勾好。三步：① <b>Expiration 选 No expiration</b>——默认只有 30 天，到期后「一键写入」会静默失效；② 拉到页面底部点绿色 <b>Generate token</b>；③ 页面出现 <code>ghp_</code> 开头的 token，点旁边的复制按钮（<b>只显示这一次</b>）→ 粘贴过来。部署完成后建议删除该 token。</p>
     <label>私有仓库名</label>
     <input type="text" id="repoName" value="fzu-auto-checkin">
     <label class="chk"><input type="checkbox" id="agree2"><span>我承诺仅在<b>本人确实在校</b>时使用，不用于隐瞒在/离校状态，不用于代挂。</span></label>
@@ -185,7 +185,7 @@
       <div id="vacTokRow">
         <label>GitHub Token</label>
         <input type="password" id="vacPat" placeholder="粘贴 ghp_ 开头的 token">
-        <p class="hint">没有？<a href="https://github.com/settings/tokens/new?scopes=repo&description=fzu-checkin" target="_blank">点这里创建</a>（勾 <code>repo</code>，<b>Expiration 选 No expiration</b>，默认 30 天会过期）。只在点下面按钮时用一次，本页不保存、不上传。</p>
+        <p class="hint">没有？<a href="https://github.com/settings/tokens/new?scopes=repo,workflow&description=fzu-checkin" target="_blank">点这里创建</a>（<code>repo</code> 和 <code>workflow</code> 已自动勾好，缺 workflow 写不了签到工作流；<b>Expiration 选 No expiration</b>，默认 30 天会过期）。只在点下面按钮时用一次，本页不保存、不上传。</p>
       </div>
       <div id="vacRepoRow">
         <label>你的私有仓库</label>
@@ -634,6 +634,9 @@ document.getElementById('deploy').addEventListener('click', async () => {
   } catch (e) {
     dlog('❌ 失败：' + e.message);
     dlog('常见原因：Token 粘贴有误 / 网络超时（GitHub 国内时好时坏）。已传好的文件不会丢——稍等片刻点上面的「重试 / 继续部署」，会从断点接着传。');
+    if (/404/.test(e.message) && /workflows/.test(e.message)) {
+      dlog('💡 这个 404 的原因基本确定：Token 缺 workflow 权限（旧链接只勾了 repo，写不了签到工作流）。用上面「点这里创建」重新生成一个（已同时勾好 repo + workflow），粘贴后点「重试 / 继续部署」，已传好的文件会自动跳过。');
+    }
   } finally {
     btn.disabled = false;
     btn.textContent = '🚀 重试 / 继续部署';
