@@ -25,7 +25,7 @@
   .seg button.on { background:var(--brand); color:#fff; }
   .chk { display:flex; align-items:flex-start; gap:8px; font-size:13px; margin-top:6px; }
   .chk input { margin-top:4px; }
-  .btn { display:inline-block; width:100%; padding:11px 0; border:none; border-radius:10px; background:var(--brand); color:#fff; font-size:15px; cursor:pointer; margin-top:14px; }
+  .btn { display:inline-block; width:100%; padding:11px 0; border:none; border-radius:10px; background:var(--brand); color:#fff; font-size:15px; cursor:pointer; margin-top:14px; text-decoration:none; text-align:center; }
   .btn.ghost { background:#eef1fe; color:var(--brand); }
   .btn:disabled { opacity:.45; cursor:not-allowed; }
   textarea { width:100%; height:190px; border:1px solid var(--line); border-radius:8px; padding:10px; font:12px/1.5 Consolas,monospace; background:#fbfcfe; white-space:pre; }
@@ -121,8 +121,8 @@
     <h2>先选你的情况 👇</h2>
     <p class="hint">签到跑在 GitHub 云端，需要一个 GitHub 账号。按你的情况选一条路，点一下直接跳过去：</p>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
-      <button class="btn ghost" id="btnNoAcc" style="flex:1;min-width:220px">🙋 我没有 GitHub 账号<br><small>走第 4 步：先注册，跟着引导一步步配</small></button>
-      <button class="btn" id="btnHasAcc" style="flex:1;min-width:220px">⚡ 我有 GitHub 账号<br><small>走第 5 步：贴 Token 一键部署，最快</small></button>
+      <a class="btn ghost" id="btnNoAcc" href="#step4card" style="flex:1;min-width:220px">🙋 我没有 GitHub 账号<br><small>走第 4 步：先注册，跟着引导一步步配</small></a>
+      <a class="btn" id="btnHasAcc" href="#step5card" style="flex:1;min-width:220px">⚡ 我有 GitHub 账号<br><small>走第 5 步：贴 Token 一键部署，最快</small></a>
     </div>
   </div>
 
