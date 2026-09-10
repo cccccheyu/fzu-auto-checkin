@@ -392,10 +392,11 @@ document.getElementById('deploy').addEventListener('click', async () => {
     dlog(`共 ${files.length} 个文件，开始逐个写入（约 1~3 分钟，别关页面）…`);
     let done = 0;
     for (const f of files) {
-      const content = await gh(`/repos/${SRC_REPO}/contents/${encPath(f.path)}`, {}, true);
+      // 用 contents API 默认 JSON 的 base64 字段直传，文本/二进制(图片)都不损坏
+      const info = await gh(`/repos/${SRC_REPO}/contents/${encPath(f.path)}`);
       await gh(`/repos/${me.login}/${repo}/contents/${encPath(f.path)}`, {
         method: 'PUT',
-        body: JSON.stringify({ message: 'deploy: ' + f.path, content: b64utf8(content) })
+        body: JSON.stringify({ message: 'deploy: ' + f.path, content: (info.content || '').replace(/\n/g, '') })
       });
       done++;
       if (done % 5 === 0 || done === files.length) dlog(`　进度 ${done}/${files.length}`);
