@@ -21,7 +21,7 @@
   .step { display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; border-radius:50%; background:var(--brand); color:#fff; font-size:13px; margin-right:8px; }
   .card h2 { font-size:16px; margin-bottom:12px; display:flex; align-items:center; }
   label { display:block; font-size:13px; color:var(--sub); margin:10px 0 4px; }
-  input[type=text], input[type=password], select { width:100%; padding:9px 12px; border:1px solid var(--line); border-radius:8px; font-size:14px; background:#fbfcfe; }
+  input[type=text], input[type=password], input[type=date], select { width:100%; padding:9px 12px; border:1px solid var(--line); border-radius:8px; font-size:14px; background:#fbfcfe; }
   input:focus, select:focus { outline:2px solid var(--brand); border-color:transparent; }
   .row { display:flex; gap:10px; } .row>div { flex:1; }
   .hint { font-size:12px; color:var(--sub); margin-top:4px; }
@@ -52,6 +52,14 @@
   .guide { margin:12px 0 0; padding-left:20px; font-size:13px; }
   .guide li { margin-top:8px; }
   .guide code { background:#eef1f7; padding:1px 5px; border-radius:4px; font-size:12px; }
+  .vac-item { border:1px dashed var(--line); border-radius:8px; padding:10px; margin-top:10px; }
+  .vac-item.bad { border-color:#f0a8a8; background:#fff7f7; }
+  .vac-head { display:flex; gap:8px; align-items:center; }
+  .vac-head .vname { flex:1; }
+  .vdel { flex:none; width:36px; height:36px; border:none; border-radius:8px; background:#f1f3f9; color:#8b93a7; font-size:14px; cursor:pointer; }
+  .vdel:hover { background:#fde8e8; color:#c0392b; }
+  .vnote { display:none; font-size:11px; color:#b91c1c; margin-top:6px; }
+  .vac-warn { display:none; font-size:12px; color:#b91c1c; margin-top:8px; }
 </style>
 </head>
 <body>
@@ -128,7 +136,7 @@
     <p class="hint">签到跑在 GitHub 云端，需要一个 GitHub 账号。按你的情况选一条路：</p>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
       <a class="btn ghost" id="btnNoAcc" href="#step4card" style="flex:1;min-width:220px">🙋 我没有 GitHub 账号<br><small>走第 4 步：先注册，跟着引导一步步配</small></a>
-      <a class="btn" id="btnHasAcc" href="#step5card" style="flex:1;min-width:220px">⚡ 我有 GitHub 账号<br><small>走第 5 步：贴 Token 一键部署，最快</small></a>
+      <a class="btn ghost" id="btnHasAcc" href="#step5card" style="flex:1;min-width:220px">⚡ 我有 GitHub 账号<br><small>走第 5 步：贴 Token 一键部署，最快</small></a>
     </div>
   </div>
 
@@ -176,11 +184,12 @@
   <!-- 后续维护：补充假期 -->
   <div class="card">
     <h2>🌴 后续补假期（不用签的日子）</h2>
-    <p class="hint">寒暑假会按校历自动跳过，不用管。实训、调休、请假离校等日子，可以在这里补——填好日期，生成一小段配置，贴到你仓库的 <code>config.yaml</code> 里就行。</p>
+    <p class="hint">寒暑假（2026—2027 校历）已经写在下面生成的配置里，不用管。实训、调休、请假离校等日子在这里补：<b>只选起止日期</b>就行，格式会自动统一。</p>
     <div id="vacList"></div>
     <button class="btn ghost" id="vacAdd" type="button" style="margin-top:8px">＋ 添加一段假期</button>
-    <label>生成的片段（贴到 config.yaml 的 <code>vacation.skip_ranges</code> 下面）</label>
-    <textarea id="vacOut" readonly style="height:130px"></textarea>
+    <p class="vac-warn" id="vacWarn"></p>
+    <label style="margin-top:12px">生成的配置（整段替换你仓库里 <code>config.yaml</code> 的 <code>vacation:</code> 段）</label>
+    <textarea id="vacOut" readonly style="height:150px"></textarea>
     <button class="btn ghost" data-copy="vacOut">📋 复制这段配置</button>
     <p class="hint">贴好后在 GitHub 页面点 <b>Commit changes</b> 保存，之后这些日子就会自动跳过。<b>假期是跳过不签，绝不会替你补签。</b></p>
     <div style="display:flex;gap:14px;align-items:center;margin-top:16px;padding-top:14px;border-top:1px dashed var(--line)">
@@ -217,7 +226,15 @@ function showStep(id){
 }
 ['btnNoAcc','btnHasAcc'].forEach((bid,i)=>{
   const b=document.getElementById(bid);
-  if(b) b.addEventListener('click', e=>{ e.preventDefault(); showStep(i===0?'step4card':'step5card'); });
+  if(b) b.addEventListener('click', e=>{
+    e.preventDefault();
+    // 选中态：只有被点的那一个变深蓝，另一个回到浅色
+    ['btnNoAcc','btnHasAcc'].forEach(x=>{
+      const el=document.getElementById(x);
+      if(el) el.classList.toggle('ghost', x!==bid);
+    });
+    showStep(i===0?'step4card':'step5card');
+  });
 });
 
 // —— 账号方式切换 ——
@@ -368,34 +385,53 @@ vacation:
 ${platCfg || 'notify:\n  type: "none"'}`;
 }
 
-// —— 后续补假期 ——
+// —— 后续补假期：日期只用选择器，格式统一 YYYY-MM-DD ——
 const vacList = document.getElementById('vacList');
+const vacWarn = document.getElementById('vacWarn');
 function vacRow(name='', s='', e=''){
   const d=document.createElement('div');
-  d.className='row'; d.style.marginTop='8px';
+  d.className='vac-item';
   d.innerHTML =
-    '<div><input type="text" class="vname" placeholder="名称（如 实训）" value="'+name+'"></div>' +
-    '<div><input type="text" class="vstart" placeholder="开始 2026-10-01" value="'+s+'"></div>' +
-    '<div><input type="text" class="vend" placeholder="结束 2026-10-07" value="'+e+'"></div>';
-  d.querySelectorAll('input').forEach(i=>i.addEventListener('input', renderVac));
+    '<div class="vac-head">' +
+      '<input type="text" class="vname" placeholder="名称（如 实训 / 调休）" value="'+name+'">' +
+      '<button type="button" class="vdel" title="删除这条">✕</button>' +
+    '</div>' +
+    '<div class="row">' +
+      '<div><label style="margin-top:0">开始日期</label><input type="date" class="vstart" value="'+s+'"></div>' +
+      '<div><label style="margin-top:0">结束日期</label><input type="date" class="vend" value="'+e+'"></div>' +
+    '</div>' +
+    '<p class="vnote">⚠️ 开始日期不能晚于结束日期，这段不会被写入配置</p>';
+  const sEl=d.querySelector('.vstart'), eEl=d.querySelector('.vend');
+  // 选好开始日期后，结束日期若还空着就自动补成同一天（可再改）
+  sEl.addEventListener('input', () => { if(sEl.value && !eEl.value) eEl.value = sEl.value; renderVac(); });
+  eEl.addEventListener('input', renderVac);
+  d.querySelector('.vname').addEventListener('input', renderVac);
+  d.querySelector('.vdel').addEventListener('click', () => { d.remove(); renderVac(); });
   vacList.appendChild(d);
+  return d;
 }
 function renderVac(){
-  const lines=[];
-  vacList.querySelectorAll('.row').forEach(r=>{
+  const lines=[]; let bad=0;
+  vacList.querySelectorAll('.vac-item').forEach(r=>{
     const n=r.querySelector('.vname').value.trim();
-    const s=r.querySelector('.vstart').value.trim();
-    const e=r.querySelector('.vend').value.trim();
-    if(/^\d{4}-\d{2}-\d{2}$/.test(s) && /^\d{4}-\d{2}-\d{2}$/.test(e)){
-      lines.push('    - name: '+(n||'假期')+'\n      start: "'+s+'"\n      end: "'+e+'"');
-    }
+    const s=r.querySelector('.vstart').value;
+    const e=r.querySelector('.vend').value;
+    const ok = !!(s && e && e >= s);
+    const begun = !!(s || e);
+    if(ok) lines.push('    - name: '+(n||'假期')+'\n      start: "'+s+'"\n      end: "'+e+'"');
+    const invalid = begun && !ok;
+    if(invalid) bad++;
+    r.classList.toggle('bad', invalid);
+    r.querySelector('.vnote').style.display = invalid ? 'block' : 'none';
   });
-  const out=document.getElementById('vacOut');
   const preset = [
     '    - name: 暑假\n      start: "2026-07-03"\n      end: "2026-08-29"',
     '    - name: 寒假\n      start: "2027-01-23"\n      end: "2027-02-21"'
   ];
-  out.value = 'vacation:\n  notify: false\n  skip_ranges:\n' + preset.concat(lines).join('\n');
+  document.getElementById('vacOut').value =
+    'vacation:\n  notify: false\n  skip_ranges:\n' + preset.concat(lines).join('\n');
+  vacWarn.style.display = bad ? 'block' : 'none';
+  vacWarn.textContent = bad ? '⚠️ 有 '+bad+' 段日期没填全、或开始晚于结束，已跳过、不会写入配置。' : '';
 }
 document.getElementById('vacAdd').addEventListener('click',()=>{ vacRow(); renderVac(); });
 vacRow(); renderVac();
