@@ -109,11 +109,11 @@
       <label class="plat on"><input type="radio" name="plat" value="none" checked><b>不提醒</b><span>签到在云端静默完成</span></label>
       <label class="plat"><input type="radio" name="plat" value="pushplus"><b>PushPlus（微信）</b><span>扫码登录 pushplus.plus 拿 token，最简单</span></label>
       <label class="plat"><input type="radio" name="plat" value="serverchan"><b>Server酱（微信）</b><span>sct.ftqq.com 扫码拿 SendKey</span></label>
-      <label class="plat"><input type="radio" name="plat" value="bark"><b>Bark（iPhone 通知）</b><span>App Store 装 Bark，复制推送 URL 里的 key</span></label>
+      <label class="plat"><input type="radio" name="plat" value="bark"><b>Bark（iPhone 通知）</b><span>App Store 装 Bark，把复制的 URL 整段贴进来就行</span></label>
     </div>
     <div id="platField" class="hide">
       <label id="platLabel">Key / Token</label>
-      <input type="text" id="platKey" placeholder="粘贴你复制的 key">
+      <input type="text" id="platKey" placeholder="粘贴 key，或 App 复制的推送 URL（自动提取）">
       <button class="btn ghost" id="testPush">📤 发一条测试推送到我手机</button>
       <p class="ok-msg" id="testOk">已发出！10 秒内手机没收到，多半是 key 复制错了，回去核对一下。</p>
       <p class="hint" id="platHint"></p>
@@ -309,8 +309,32 @@ if (coordManual) coordManual.addEventListener('click', e => {
 const platMeta = {
   pushplus:  { label:'PushPlus token', hint:'获取：<a href="https://www.pushplus.plus" target="_blank">pushplus.plus</a> 微信扫码登录 → 首页复制 token', url:k=>`https://www.pushplus.plus/send?token=${k}&title=福大晚点名测试推送&content=配置成功，每晚 21:35 自动签到。` },
   serverchan:{ label:'Server酱 SendKey', hint:'获取：<a href="https://sct.ftqq.com" target="_blank">sct.ftqq.com</a> 微信扫码 → 复制 SendKey', url:k=>`https://sctapi.ftqq.com/${k}.send?title=福大晚点名测试推送&desp=配置成功，每晚 21:35 自动签到。` },
-  bark:      { label:'Bark key', hint:'获取：App Store 安装 Bark → 复制示例 URL 中 api.day.app/ 后面那串', url:k=>`https://api.day.app/${k}/福大晚点名测试推送/配置成功` },
+  bark:      { label:'Bark key', hint:'获取：App Store 安装 Bark → 长按复制示例 URL，<b>整段粘贴到上面</b>，key 自动提取', url:k=>`https://api.day.app/${k}/福大晚点名测试推送/配置成功` },
 };
+// 粘贴自动提取：Bark 整段推送 URL / Server酱 URL / PushPlus 带 token 的 URL，都能直接贴
+function extractKey(p, raw){
+  raw = (raw || '').trim();
+  if (!raw) return '';
+  if (p === 'bark'){
+    const m = raw.match(/api\.day\.app\/(?:p\/)?([A-Za-z0-9]+)/i);
+    return m ? m[1] : raw.replace(/\s+/g, '');
+  }
+  if (p === 'serverchan'){
+    const m = raw.match(/SCT[A-Za-z0-9]+/);
+    return m ? m[0] : raw;
+  }
+  if (p === 'pushplus'){
+    const m = raw.match(/[?&]token=([A-Za-z0-9]+)/i);
+    return m ? m[1] : raw.replace(/\s+/g, '');
+  }
+  return raw;
+}
+function normKey(){
+  const el = document.getElementById('platKey');
+  const c = extractKey(plat, el.value);
+  if (c && c !== el.value) el.value = c;
+  return el.value;
+}
 const platList = document.getElementById('platList');
 let plat = 'none';
 platList.addEventListener('click', e => {
@@ -322,12 +346,14 @@ platList.addEventListener('click', e => {
   if (show) {
     document.getElementById('platLabel').textContent = platMeta[plat].label;
     document.getElementById('platHint').innerHTML = platMeta[plat].hint;
+    normKey();
   }
 });
 
 // —— 测试推送（浏览器直发，fire-and-forget）——
+document.getElementById('platKey').addEventListener('input', normKey);
 document.getElementById('testPush').addEventListener('click', () => {
-  const k = document.getElementById('platKey').value.trim();
+  const k = normKey();
   if (!k) { alert('先粘贴 key'); return; }
   fetch(platMeta[plat].url(k), { mode:'no-cors' }).finally(() => {
     document.getElementById('testOk').style.display = 'block';
@@ -377,9 +403,9 @@ function buildYaml() {
   }
   if (!v('lng') || !v('lat')) { alert('坐标还没填（第 2 步）'); throw ''; }
   const platCfg = plat === 'none' ? '' :
-    plat === 'pushplus' ? `notify:\n  type: "pushplus"\n  pushplus_token: "${v('platKey')}"` :
-    plat === 'serverchan' ? `notify:\n  type: "serverchan"\n  serverchan_key: "${v('platKey')}"` :
-    `notify:\n  type: "bark"\n  bark_url: "https://api.day.app/${v('platKey')}"`;
+    plat === 'pushplus' ? `notify:\n  type: "pushplus"\n  pushplus_token: "${normKey()}"` :
+    plat === 'serverchan' ? `notify:\n  type: "serverchan"\n  serverchan_key: "${normKey()}"` :
+    `notify:\n  type: "bark"\n  bark_url: "https://api.day.app/${normKey()}"`;
   return `# 由配置生成器产生 ${new Date().toLocaleString('zh-CN')}
 ${user}
 
