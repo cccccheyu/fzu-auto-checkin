@@ -10,7 +10,7 @@ on:
     - cron: "0 15 * * *"
     - cron: "5 15 * * *"
     - cron: "30 15 * * *"
-    - cron: "55 14 * * *"
+    - cron: "55 15 * * *"
   workflow_dispatch: {}   # 支持手动触发
 
 jobs:
