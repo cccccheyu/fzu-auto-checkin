@@ -51,7 +51,7 @@
 <body>
 <div class="wrap">
   <h1>🎓 福大晚点名自动签到 · 配置生成器</h1>
-  <p class="sub">全程在你的浏览器里完成，任何信息都不会上传。填完下面 1~3 步，第 4 步有手动引导，或直接用第 5 步「一键部署」全自动搞定。</p>
+  <p class="sub">全程在你的浏览器里完成，任何信息都不会上传。填完 1~3 步，按你的情况二选一：<b>没有 GitHub 账号</b>走第 4 步手动配置，<b>已有账号</b>走第 5 步一键部署。</p>
 
   <!-- 痛点 -->
   <div class="card">
@@ -116,9 +116,19 @@
     </div>
   </div>
 
-  <!-- 第 4 步 生成 -->
-  <div class="card">
-    <h2><span class="step">4</span>生成配置</h2>
+  <!-- 分流：先选有没有 GitHub 账号 -->
+  <div class="card" style="border:2px solid var(--brand);">
+    <h2>先选你的情况 👇</h2>
+    <p class="hint">签到跑在 GitHub 云端，需要一个 GitHub 账号。按你的情况选一条路，点一下直接跳过去：</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
+      <button class="btn ghost" id="btnNoAcc" style="flex:1;min-width:220px">🙋 我没有 GitHub 账号<br><small>走第 4 步：先注册，跟着引导一步步配</small></button>
+      <button class="btn" id="btnHasAcc" style="flex:1;min-width:220px">⚡ 我有 GitHub 账号<br><small>走第 5 步：贴 Token 一键部署，最快</small></button>
+    </div>
+  </div>
+
+  <!-- 第 4 步 手动（没有账号） -->
+  <div class="card" id="step4card">
+    <h2><span class="step">4</span>没有 GitHub 账号？手动配置</h2>
     <p class="hint" style="margin-bottom:8px">📌 提前准备：需要一个 <b>GitHub 账号</b>（签到跑在 GitHub 云端，免费）。没有？<a href="https://github.com/signup" target="_blank">点这里注册</a>，1 分钟搞定。生成配置后有完整的一步步引导。</p>
     <p class="hint" style="margin-bottom:8px">🌐 关于梯子：GitHub 国内直连时好时坏，<b>只有注册和配置那几分钟</b>可能打不开——换个时间、用校园网 / 手机热点，或挂梯子都行。<b>配好之后就不用了</b>：签到跑在 GitHub 服务器上，日常零操作、零网络要求。</p>
     <button class="btn ghost" id="ghCheck" style="margin-top:0">🔗 测一下当前网络能不能打开 GitHub</button>
@@ -142,17 +152,18 @@
     </div>
   </div>
 
-  <!-- 第 5 步 一键部署 -->
-  <div class="card">
-    <h2><span class="step">5</span>一键部署（懒人版 · 需已有 GitHub 账号）</h2>
-    <p class="hint">还没有 GitHub 账号？先到<b>第 4 步顶部注册</b>一个，再回来用这个一键部署。</p>
+  <!-- 第 5 步 一键部署（有账号） -->
+  <div class="card" id="step5card">
+    <h2><span class="step">5</span>已有 GitHub 账号？一键部署（最快）</h2>
+    <p class="hint">没有账号？走上面<b>第 4 步</b>。有账号的贴个 Token，全自动建私有仓库 + 写入代码和配置，今晚就能自动签。</p>
     <p class="hint">用你自己的 GitHub 账号做托管：下面会自动替你创建一个<b>私有仓库</b>、写好全部代码和你的配置，之后每晚 21:35 / 21:50 自动签到。凭据只存在你自己的私有仓库里，不经过任何第三方服务器。</p>
     <label>GitHub Token</label>
     <input type="password" id="ghPat" placeholder="粘贴 ghp_ 开头的 token">
     <p class="hint">没有？<a href="https://github.com/settings/tokens/new?scopes=repo&description=fzu-checkin" target="_blank">点这里创建</a>（登录 GitHub → 直接点页面底部绿色 Generate token 按钮 → 复制粘贴过来）。部署完成后建议删除该 token。</p>
     <label>私有仓库名</label>
     <input type="text" id="repoName" value="fzu-auto-checkin">
-    <button class="btn" id="deploy">🚀 一键部署，今晚开始自动签到</button>
+    <label class="chk"><input type="checkbox" id="agree2"><span>我承诺仅在<b>本人确实在校</b>时使用，不用于隐瞒在/离校状态，不用于代挂。</span></label>
+    <button class="btn" id="deploy" disabled>🚀 一键部署，今晚开始自动签到</button>
     <pre id="log" class="hide"></pre>
   </div>
 
@@ -347,6 +358,7 @@ document.getElementById('deploy').addEventListener('click', async () => {
   pat = document.getElementById('ghPat').value.trim();
   const repo = document.getElementById('repoName').value.trim() || 'fzu-auto-checkin';
   if (!pat) { alert('先粘贴 GitHub Token（第 5 步上面有创建入口）'); return; }
+  if (!document.getElementById('agree2').checked) { alert('请先勾选承诺条款（仅本人在校时使用，不用于代挂）'); return; }
   if (!/^[A-Za-z0-9_.-]+$/.test(repo)) { alert('仓库名只能包含字母、数字、. _ -'); return; }
   btn.disabled = true;
   logEl.textContent = '';
