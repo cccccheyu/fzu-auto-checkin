@@ -4,10 +4,11 @@ v1.0 主路径：直接使用 App 免登 token（获取方式见 docs/protocol.m
 无需在脚本里保存学号密码。CAS 自动登录为可选增强（src/login.py）。
 """
 from src.config import load_config
-from src.checkin import AttnClient, query_today_task, do_checkin
+from src.checkin import AttnClient, query_today_task, do_checkin, beijing_now
 from src.notify import notify
 from src.vacation import matched_range, today_cn
 
+import datetime
 import re
 
 import requests
@@ -60,17 +61,20 @@ def main():
         status = query_today_task(client, cfg)
     except requests.HTTPError as e:
         # 跨午夜时段（约 0:00-1:00）服务器尚未发布当日计划时会返回 500，
-        # 属正常现象；定时任务设在 21:35/21:50 不受影响。
+        # 属正常现象；定时任务设在 21:35/21:50/22:05 不受影响。
         title = "智汇福大晚点名：服务器暂未返回今日计划"
         print(title, e)
-        notify(cfg, title, "服务器暂时无今日计划数据（跨天时段/服务波动），本次跳过。稍后自动重试无需操作。")
+        # 21:45 前视为首跑，推送提醒一次即可；21:50/22:05 兜底跑静默，避免一晚连推三条
+        if beijing_now().time() < datetime.time(21, 45):
+            notify(cfg, title, "服务器暂时无今日计划数据（跨天时段/服务波动），本次跳过。稍后自动重试无需操作。")
+        else:
+            print("（兜底跑：仍无计划数据，静默跳过，不再重复推送）")
         return
     init_data = status["init"]
 
     if not status["need_checkin"]:
-        title = "智汇福大晚点名：已签到 / 无需操作"
-        print(title)
-        notify(cfg, title, "今日晚点名已处理，无需重复签到。")
+        # 静默：21:35 首跑成功时已推送过，21:50 兜底跑只需记日志，不再打扰
+        print("已签到 / 无需操作（不推送，避免每晚重复通知）")
         return
 
     if not init_data.get("schoolData"):
