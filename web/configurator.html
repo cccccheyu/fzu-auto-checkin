@@ -13,6 +13,8 @@
   h1 { font-size:22px; margin-bottom:4px; }
   .sub { color:var(--sub); font-size:14px; margin-bottom:20px; }
   .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px; margin-bottom:14px; }
+  /* 第 4 / 5 步：初始隐藏，点上面分流卡片后只出现对应的那张 */
+  .card.folded { display:none; }
   .step { display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; border-radius:50%; background:var(--brand); color:#fff; font-size:13px; margin-right:8px; }
   .card h2 { font-size:16px; margin-bottom:12px; display:flex; align-items:center; }
   label { display:block; font-size:13px; color:var(--sub); margin:10px 0 4px; }
@@ -128,7 +130,7 @@
   </div>
 
   <!-- 第 4 步 手动（没有账号） -->
-  <div class="card" id="step4card">
+  <div class="card folded" id="step4card">
     <h2><span class="step">4</span>没有 GitHub 账号？手动配置</h2>
     <p class="hint" style="margin-bottom:8px">📌 提前准备：需要一个 <b>GitHub 账号</b>（签到跑在 GitHub 云端，免费）。没有？<a href="https://github.com/signup" target="_blank">点这里注册</a>，1 分钟搞定。生成配置后有完整的一步步引导。</p>
     <p class="hint" style="margin-bottom:8px">🌐 关于梯子：GitHub 国内直连时好时坏，<b>只有注册和配置那几分钟</b>可能打不开——换个时间、用校园网 / 手机热点，或挂梯子都行。<b>配好之后就不用了</b>：签到跑在 GitHub 服务器上，日常零操作、零网络要求。</p>
@@ -154,7 +156,7 @@
   </div>
 
   <!-- 第 5 步 一键部署（有账号） -->
-  <div class="card" id="step5card">
+  <div class="card folded" id="step5card">
     <h2><span class="step">5</span>已有 GitHub 账号？一键部署（最快）</h2>
     <p class="hint">没有账号？走上面<b>第 4 步</b>。有账号的贴个 Token，全自动建私有仓库 + 写入代码和配置，今晚就能自动签。</p>
     <p class="hint">用你自己的 GitHub 账号做托管：下面会自动替你创建一个<b>私有仓库</b>、写好全部代码和你的配置，之后每晚 21:35 / 21:50 自动签到。凭据只存在你自己的私有仓库里，不经过任何第三方服务器。</p>
@@ -168,10 +170,40 @@
     <pre id="log" class="hide"></pre>
   </div>
 
+  <!-- 后续维护：补充假期 -->
+  <div class="card">
+    <h2>🌴 后续补假期（不用签的日子）</h2>
+    <p class="hint">寒暑假会按校历自动跳过，不用管。实训、调休、请假离校等日子，可以在这里补——填好日期，生成一小段配置，贴到你仓库的 <code>config.yaml</code> 里就行。</p>
+    <div id="vacList"></div>
+    <button class="btn ghost" id="vacAdd" type="button" style="margin-top:8px">＋ 添加一段假期</button>
+    <label>生成的片段（贴到 config.yaml 的 <code>vacation.skip_ranges</code> 下面）</label>
+    <textarea id="vacOut" readonly style="height:130px"></textarea>
+    <button class="btn ghost" data-copy="vacOut">📋 复制这段配置</button>
+    <p class="hint">贴好后在 GitHub 页面点 <b>Commit changes</b> 保存，之后这些日子就会自动跳过。<b>假期是跳过不签，绝不会替你补签。</b></p>
+    <div style="display:flex;gap:14px;align-items:center;margin-top:16px;padding-top:14px;border-top:1px dashed var(--line)">
+      <img src="qr.png" alt="本页二维码" style="width:112px;height:112px;border:1px solid var(--line);border-radius:10px;background:#fff;padding:4px">
+      <div class="hint" style="margin:0">💡 <b>建议把这个二维码 / 本页链接存下来</b><br>以后要补假期，扫码回到本页，填一下日期、复制配置贴到你仓库就行——不用重新配整个流程。</div>
+    </div>
+  </div>
+
   <footer>开源项目 <a href="https://github.com/cccccheyu/fzu-auto-checkin" target="_blank">fzu-auto-checkin</a> · 本页面为纯静态工具，不收集任何数据</footer>
 </div>
 
 <script>
+// —— 分流：点按钮 → 展开对应的第 4 / 第 5 步 ——
+function showStep(id){
+  ['step4card','step5card'].forEach(c=>{
+    const el=document.getElementById(c);
+    if(el) el.classList.toggle('folded', c!==id);
+  });
+  const t=document.getElementById(id);
+  if(t) t.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+['btnNoAcc','btnHasAcc'].forEach((bid,i)=>{
+  const b=document.getElementById(bid);
+  if(b) b.addEventListener('click', e=>{ e.preventDefault(); showStep(i===0?'step4card':'step5card'); });
+});
+
 // —— 账号方式切换 ——
 const authSeg = document.getElementById('authSeg');
 let authMode = 'pwd';
@@ -319,6 +351,38 @@ vacation:
 
 ${platCfg || 'notify:\n  type: "none"'}`;
 }
+
+// —— 后续补假期 ——
+const vacList = document.getElementById('vacList');
+function vacRow(name='', s='', e=''){
+  const d=document.createElement('div');
+  d.className='row'; d.style.marginTop='8px';
+  d.innerHTML =
+    '<div><input type="text" class="vname" placeholder="名称（如 实训）" value="'+name+'"></div>' +
+    '<div><input type="text" class="vstart" placeholder="开始 2026-10-01" value="'+s+'"></div>' +
+    '<div><input type="text" class="vend" placeholder="结束 2026-10-07" value="'+e+'"></div>';
+  d.querySelectorAll('input').forEach(i=>i.addEventListener('input', renderVac));
+  vacList.appendChild(d);
+}
+function renderVac(){
+  const lines=[];
+  vacList.querySelectorAll('.row').forEach(r=>{
+    const n=r.querySelector('.vname').value.trim();
+    const s=r.querySelector('.vstart').value.trim();
+    const e=r.querySelector('.vend').value.trim();
+    if(/^\d{4}-\d{2}-\d{2}$/.test(s) && /^\d{4}-\d{2}-\d{2}$/.test(e)){
+      lines.push('    - name: '+(n||'假期')+'\n      start: "'+s+'"\n      end: "'+e+'"');
+    }
+  });
+  const out=document.getElementById('vacOut');
+  const preset = [
+    '    - name: 暑假\n      start: "2026-07-03"\n      end: "2026-08-29"',
+    '    - name: 寒假\n      start: "2027-01-23"\n      end: "2027-02-21"'
+  ];
+  out.value = 'vacation:\n  notify: false\n  skip_ranges:\n' + preset.concat(lines).join('\n');
+}
+document.getElementById('vacAdd').addEventListener('click',()=>{ vacRow(); renderVac(); });
+vacRow(); renderVac();
 
 // —— 复制按钮 ——
 document.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', () => {
