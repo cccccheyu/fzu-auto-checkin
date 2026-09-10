@@ -163,7 +163,7 @@
     <p class="hint">贴一个 Token 就行：自动替你创建<b>私有仓库</b>、写入全部代码和你的配置，之后每晚 21:35 / 21:50 自动签到。凭据只存在你自己的私有仓库里，不经过任何第三方服务器。</p>
     <label>GitHub Token</label>
     <input type="password" id="ghPat" placeholder="粘贴 ghp_ 开头的 token">
-    <p class="hint">没有？<a href="https://github.com/settings/tokens/new?scopes=repo&description=fzu-checkin" target="_blank">点这里创建</a>（登录 GitHub → 直接点页面底部绿色 Generate token 按钮 → 复制粘贴过来）。部署完成后建议删除该 token。</p>
+    <p class="hint">没有？<a href="https://github.com/settings/tokens/new?scopes=repo&description=fzu-checkin" target="_blank">点这里创建</a>（已自动勾好 repo）。三步：① <b>Expiration 选 No expiration</b>——默认只有 30 天，到期后「一键写入」会静默失效；② 点页面底部绿色 <b>Generate token</b>；③ 复制 <code>ghp_</code> 开头的 token 粘贴过来。部署完成后建议删除该 token。</p>
     <label>私有仓库名</label>
     <input type="text" id="repoName" value="fzu-auto-checkin">
     <label class="chk"><input type="checkbox" id="agree2"><span>我承诺仅在<b>本人确实在校</b>时使用，不用于隐瞒在/离校状态，不用于代挂。</span></label>
@@ -185,7 +185,7 @@
       <div id="vacTokRow">
         <label>GitHub Token</label>
         <input type="password" id="vacPat" placeholder="粘贴 ghp_ 开头的 token">
-        <p class="hint">没有？<a href="https://github.com/settings/tokens/new?scopes=repo&description=fzu-checkin" target="_blank">点这里创建</a>（勾 <code>repo</code>）。只在点下面按钮时用一次，本页不保存、不上传。</p>
+        <p class="hint">没有？<a href="https://github.com/settings/tokens/new?scopes=repo&description=fzu-checkin" target="_blank">点这里创建</a>（勾 <code>repo</code>，<b>Expiration 选 No expiration</b>，默认 30 天会过期）。只在点下面按钮时用一次，本页不保存、不上传。</p>
       </div>
       <div id="vacRepoRow">
         <label>你的私有仓库</label>
