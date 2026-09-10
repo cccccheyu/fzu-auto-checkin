@@ -186,15 +186,19 @@
       <label>GitHub Token</label>
       <input type="password" id="vacPat" placeholder="粘贴 ghp_ 开头的 token">
       <p class="hint">没有？<a href="https://github.com/settings/tokens/new?scopes=repo&description=fzu-checkin" target="_blank">点这里创建</a>（勾 <code>repo</code>）。只在点下面按钮时用一次，本页不保存、不上传。</p>
+      <p class="hint hide" id="vacPatTip">✅ 已沿用你刚才在第 5 步填的 Token（只存在本次打开的内存里，关闭页面即清除）。</p>
       <label>你的私有仓库</label>
       <input type="text" id="vacRepo" placeholder="如 cccccheyu/fzu-checkin；只填仓库名则默认在你账号下">
       <button class="btn" id="vacPush">🚀 写入 config.yaml</button>
       <pre id="vacLog" class="hide"></pre>
     </div>
-    <label style="margin-top:18px">或者手动改：生成的配置（整段替换你仓库里 <code>config.yaml</code> 的 <code>vacation:</code> 段）</label>
-    <textarea id="vacOut" readonly style="height:150px"></textarea>
-    <button class="btn ghost" data-copy="vacOut">📋 复制这段配置</button>
-    <p class="hint">复制后贴到 GitHub 上你仓库的 <code>config.yaml</code>，点 <b>Commit changes</b> 保存。<b>假期是跳过不签，绝不会替你补签。</b></p>
+    <p class="hint" style="margin-top:14px"><b>假期是跳过不签，绝不会替你补签。</b>不想贴 Token？<a href="#" id="vacManual">改成手动复制，自己去 GitHub 改</a></p>
+    <div id="vacManualBox" class="hide">
+      <label>生成的配置（整段替换你仓库里 <code>config.yaml</code> 的 <code>vacation:</code> 段）</label>
+      <textarea id="vacOut" readonly style="height:150px"></textarea>
+      <button class="btn ghost" data-copy="vacOut">📋 复制这段配置</button>
+      <p class="hint">复制后贴到 GitHub 上你仓库的 <code>config.yaml</code>，点 <b>Commit changes</b> 保存。</p>
+    </div>
     <div style="display:flex;gap:14px;align-items:center;margin-top:16px;padding-top:14px;border-top:1px dashed var(--line)">
       <img src="qr.png" alt="本页二维码" style="width:112px;height:112px;border:1px solid var(--line);border-radius:10px;background:#fff;padding:4px">
       <div class="hint" style="margin:0">💡 <b>建议把这个二维码 / 本页链接存下来</b><br>以后要补假期，扫码回到本页。<b>上次填过的内容会自动带出来</b>，改改日期、复制走就行——不用重新配整个流程。</div>
@@ -555,6 +559,14 @@ document.getElementById('deploy').addEventListener('click', async () => {
     }
 
     dlog('🎉 部署完成！今晚 21:35 / 21:50 自动开始。Token 建议现在去 GitHub 删掉（Settings → Developer settings → Tokens）。');
+
+    // 补假期复用同一个 Token：只存在本次打开的内存里，不落盘、不上传
+    const vp = document.getElementById('vacPat');
+    if (vp && !vp.value) {
+      vp.value = pat;
+      const tip = document.getElementById('vacPatTip');
+      if (tip) tip.classList.remove('hide');
+    }
   } catch (e) {
     dlog('❌ 失败：' + e.message);
     dlog('常见原因：Token 粘贴有误 / 网络超时（GitHub 国内时好时坏，等会儿点重试一般就过）。');
@@ -589,9 +601,16 @@ function replaceVacation(text, block){
   return lines.slice(0, start).concat(block.split('\n')).concat(lines.slice(end)).join('\n');
 }
 
+// 手动复制是备选路径：默认收起，点小字才展开
+const vacManual = document.getElementById('vacManual');
+if (vacManual) vacManual.addEventListener('click', e => {
+  e.preventDefault();
+  document.getElementById('vacManualBox').classList.remove('hide');
+});
+
 document.getElementById('vacPush').addEventListener('click', async () => {
   const btn = document.getElementById('vacPush');
-  const token = document.getElementById('vacPat').value.trim();
+  const token = document.getElementById('vacPat').value.trim() || pat;
   let repo = document.getElementById('vacRepo').value.trim()
     .replace(/^https?:\/\/github\.com\//i, '').replace(/\.git$/, '').replace(/^\/+|\/+$/g, '');
   vacLogEl.textContent = '';
