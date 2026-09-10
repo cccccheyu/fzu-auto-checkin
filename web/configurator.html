@@ -57,16 +57,16 @@
 <body>
 <div class="wrap">
   <h1>🎓 福大晚点名自动签到 · 配置生成器</h1>
-  <p class="sub">全程在你的浏览器里完成，任何信息都不会上传。填完 1~3 步，按你的情况二选一：<b>没有 GitHub 账号</b>走第 4 步手动配置，<b>已有账号</b>走第 5 步一键部署。</p>
+  <p class="sub">全程在你的浏览器里完成，任何信息都不会上传。填完 1~3 步后，按你有没有 GitHub 账号二选一。</p>
 
   <!-- 痛点 -->
   <div class="card">
     <h2>😵 这说的是你吗？</h2>
     <div class="pain">21:30 的晚点名，忙着作业 / 游戏 / 睡着了，一晃就过点 → <b>迟到缺勤通报</b></div>
     <div class="pain">天天定闹钟提醒自己，还得掏出手机打开 App 手动点一遍</div>
-    <div class="sol"><b>✅ 配置一次，一学期清净</b>：在校的每晚 21:35 / 21:50 云端自动签到；寒暑假自动跳过，还能自己加假期区间（实训、调休等不用签的日子），假期绝不替你签</div>
+    <div class="sol"><b>✅ 配置一次，一学期清净</b>：在校的每晚 21:35 / 21:50 云端自动签到；寒暑假自动跳过，实训 / 调休等不用签的日子也能自己加区间，<b>绝不替你补签</b></div>
     <div class="sol"><b>✅ 不打扰</b>：默认静默完成；想知道结果，可推送到微信 / iPhone</div>
-    <div class="sol"><b>✅ 不经手任何第三方</b>：凭据只进你自己的私有仓库，本页面纯前端、不收集任何数据</div>
+    <div class="sol"><b>✅ 不经手任何第三方</b>：凭据只进你自己的私有仓库</div>
   </div>
 
   <!-- 第 1 步 账号 -->
@@ -101,7 +101,7 @@
     </div>
     <label>地址文案（打卡记录里显示的）</label>
     <input type="text" id="addr" placeholder="如 福州大学旗山校区生活区X号楼">
-    <p class="hint">浏览器定位需授权且要求 HTTPS：微信内打不开时，用 Safari/Chrome 打开本页。⚠️ 只在本人确实在校时使用，工具不伪造定位。</p>
+    <p class="hint">浏览器定位需授权且要求 HTTPS：微信内打不开时，用 Safari/Chrome 打开本页。工具不伪造定位。</p>
   </div>
 
   <!-- 第 3 步 推送 -->
@@ -125,7 +125,7 @@
   <!-- 分流：先选有没有 GitHub 账号 -->
   <div class="card" style="border:2px solid var(--brand);">
     <h2>先选你的情况 👇</h2>
-    <p class="hint">签到跑在 GitHub 云端，需要一个 GitHub 账号。按你的情况选一条路，点一下直接跳过去：</p>
+    <p class="hint">签到跑在 GitHub 云端，需要一个 GitHub 账号。按你的情况选一条路：</p>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
       <a class="btn ghost" id="btnNoAcc" href="#step4card" style="flex:1;min-width:220px">🙋 我没有 GitHub 账号<br><small>走第 4 步：先注册，跟着引导一步步配</small></a>
       <a class="btn" id="btnHasAcc" href="#step5card" style="flex:1;min-width:220px">⚡ 我有 GitHub 账号<br><small>走第 5 步：贴 Token 一键部署，最快</small></a>
@@ -135,7 +135,7 @@
   <!-- 第 4 步 手动（没有账号） -->
   <div class="card folded" id="step4card">
     <h2><span class="step">4</span>没有 GitHub 账号？手动配置</h2>
-    <p class="hint" style="margin-bottom:8px">📌 提前准备：需要一个 <b>GitHub 账号</b>（签到跑在 GitHub 云端，免费）。没有？<a href="https://github.com/signup" target="_blank">点这里注册</a>，1 分钟搞定。生成配置后有完整的一步步引导。</p>
+    <p class="hint" style="margin-bottom:8px">📌 生成配置后，下面有完整的一步步引导，照着做就行。</p>
     <p class="hint" style="margin-bottom:8px">🌐 关于梯子：GitHub 国内直连时好时坏，<b>只有注册和配置那几分钟</b>可能打不开——换个时间、用校园网 / 手机热点，或挂梯子都行。<b>配好之后就不用了</b>：签到跑在 GitHub 服务器上，日常零操作、零网络要求。</p>
     <button class="btn ghost" id="ghCheck" style="margin-top:0">🔗 测一下当前网络能不能打开 GitHub</button>
     <p class="hint" id="ghCheckResult" style="display:none;margin-top:6px"></p>
@@ -146,7 +146,7 @@
       <textarea id="outSecret" readonly></textarea>
       <button class="btn ghost" data-copy="outSecret">📋 复制配置内容</button>
       <ol class="guide">
-        <li>没有 GitHub 账号？<a href="https://github.com/signup" target="_blank">点这里免费注册</a>（1 分钟，需要邮箱）。GitHub 国内直连偶尔卡，打不开就换个时间或挂下校园网试试。</li>
+        <li>没有 GitHub 账号？<a href="https://github.com/signup" target="_blank">点这里免费注册</a>，1 分钟搞定（需要邮箱）。</li>
         <li><a href="https://github.com/new/import" target="_blank">点这里把项目导入到你自己的私有仓库</a>：① "Your old repository's clone URL" 填 <code>https://github.com/cccccheyu/fzu-auto-checkin</code>；② 仓库名随意；③ 选择 <b>Private</b>（私有，重要！你的密码只有你自己能看到）；④ 点 Begin import。</li>
         <li>导入完成后，在你的仓库页面依次打开：<code>Settings → Secrets and variables → Actions → New repository secret</code>，Name 填 <code>CONFIG_YAML</code>，Secret 粘贴上面复制的内容，点 Add secret。</li>
         <li>完成！之后每晚 <b>21:35 / 21:50</b> 自动签到，可在仓库的 <code>Actions</code> 标签页查看签到记录。签到结果可回第 3 步配置微信推送。</li>
@@ -161,8 +161,8 @@
   <!-- 第 5 步 一键部署（有账号） -->
   <div class="card folded" id="step5card">
     <h2><span class="step">5</span>已有 GitHub 账号？一键部署（最快）</h2>
-    <p class="hint">没有账号？走上面<b>第 4 步</b>。有账号的贴个 Token，全自动建私有仓库 + 写入代码和配置，今晚就能自动签。</p>
-    <p class="hint">用你自己的 GitHub 账号做托管：下面会自动替你创建一个<b>私有仓库</b>、写好全部代码和你的配置，之后每晚 21:35 / 21:50 自动签到。凭据只存在你自己的私有仓库里，不经过任何第三方服务器。</p>
+    <p class="hint">没有账号？走上面<b>第 4 步</b>。</p>
+    <p class="hint">贴一个 Token 就行：自动替你创建<b>私有仓库</b>、写入全部代码和你的配置，之后每晚 21:35 / 21:50 自动签到。凭据只存在你自己的私有仓库里，不经过任何第三方服务器。</p>
     <label>GitHub Token</label>
     <input type="password" id="ghPat" placeholder="粘贴 ghp_ 开头的 token">
     <p class="hint">没有？<a href="https://github.com/settings/tokens/new?scopes=repo&description=fzu-checkin" target="_blank">点这里创建</a>（登录 GitHub → 直接点页面底部绿色 Generate token 按钮 → 复制粘贴过来）。部署完成后建议删除该 token。</p>
@@ -189,7 +189,20 @@
     </div>
   </div>
 
-  <footer>开源项目 <a href="https://github.com/cccccheyu/fzu-auto-checkin" target="_blank">fzu-auto-checkin</a> · 本页面为纯静态工具，不收集任何数据</footer>
+  <!-- 意见反馈 -->
+  <div class="card" id="feedback">
+    <h2>💬 意见反馈</h2>
+    <p class="hint" style="margin-top:0">用着有问题、发现 bug，或者想让它支持别的学校 / 别的签到平台，都欢迎直接找我 —— 项目会持续维护。</p>
+    <label>反馈邮箱</label>
+    <input type="text" id="fbMail" value="inspring_2026@163.com" readonly>
+    <div class="row" style="margin-top:10px">
+      <div><a class="btn ghost" href="mailto:inspring_2026@163.com?subject=%E7%A6%8F%E5%A4%A7%E7%AD%BE%E5%88%B0%E5%B7%A5%E5%85%B7%E5%8F%8D%E9%A6%88" style="margin-top:0">✉️ 发邮件给我</a></div>
+      <div><button class="btn ghost" data-copy="fbMail" style="margin-top:0">📋 复制</button></div>
+    </div>
+    <p class="hint">也可以在项目 <a href="https://github.com/cccccheyu/fzu-auto-checkin/issues" target="_blank">GitHub Issues</a> 里提问题。</p>
+  </div>
+
+  <footer>开源项目 <a href="https://github.com/cccccheyu/fzu-auto-checkin" target="_blank">fzu-auto-checkin</a> · 本页面为纯静态工具，不收集任何数据 · 反馈：inspring_2026@163.com</footer>
 </div>
 
 <script>
