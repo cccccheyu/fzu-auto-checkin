@@ -34,6 +34,13 @@ def _save_token(cfg, token: str):
 def main():
     cfg = load_config()
 
+    # GitHub 定时档常被延迟，晚间的档可能拖到凌晨才补跑：
+    # 晚点名窗口 21:30-23:59，窗口外（延迟补跑）直接静默退出——不登录、不推送，杜绝凌晨骚扰
+    now = beijing_now()
+    if not (datetime.time(21, 30) <= now.time() <= datetime.time(23, 59, 59)):
+        print(f"北京时间 {now:%H:%M} 不在晚点名窗口（21:30-23:59），判定为延迟触发的补跑，静默跳过。")
+        return
+
     # 假期自动跳过：命中校历/自定义区间时什么都不做（默认静默）
     vac = matched_range(cfg)
     if vac:
@@ -80,7 +87,11 @@ def main():
     if not init_data.get("schoolData"):
         title = "智汇福大晚点名：今日无考勤计划"
         print(title)
-        notify(cfg, title, "服务器未返回签到范围（可能今日无晚点名），未执行打卡。")
+        # 首跑（22:00 前）推送提醒一次；后面的兜底跑静默，避免一晚连推多条
+        if beijing_now().time() < datetime.time(22, 0):
+            notify(cfg, title, "服务器未返回签到范围（可能今日无晚点名），未执行打卡。")
+        else:
+            print("（晚间兜底跑：无考勤计划，静默跳过，不重复推送）")
         return
 
     try:
