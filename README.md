@@ -1,6 +1,6 @@
 # fzu-auto-checkin · 福州大学晚点名自动签到
 
-![License](https://img.shields.io/github/license/cccccheyu/fzu-auto-checkin) ![Python](https://img.shields.io/badge/python-3.11+-blue) ![GitHub Actions](https://img.shields.io/badge/cron-21%3A35%20%2F%2021%3A50-green)
+![License](https://img.shields.io/github/license/cccccheyu/fzu-auto-checkin) ![Python](https://img.shields.io/badge/python-3.11+-blue) ![GitHub Actions](https://img.shields.io/badge/cron-20%3A05%E2%80%9323%3A55%20%C3%9710-blue)
 
 <div align="center"><img src="assets/fzu-checkin-poster.png" width="420" alt="晚点名自动签到宣传图"></div>
 
@@ -12,7 +12,7 @@
 
 ## 功能
 
-- ⏰ 定时自动签到（默认每晚 21:35 / 21:50 / 22:05 / 23:00 / 23:05 / 23:30 / 23:55 七次，层层兜底）
+- ⏰ 定时自动签到（每晚 21:35–23:55 七个主档层层兜底，另设 20:05 / 20:35 / 21:05 提前档对冲 GitHub 定时延迟）
 - 📲 签到结果微信推送（Server酱 / PushPlus / Bark / 企业微信）
 - 🔑 支持学号密码全自动登录，token 过期自动换新，无需手工维护
 - 📍 定位校验预检：坐标不在校区内会明确报错，不会乱点
@@ -63,7 +63,7 @@ python main.py
 
 1. 在 GitHub 上 Fork 本仓库，或新建一个 **私有仓库** 推送这份代码
 2. 仓库 `Settings → Secrets and variables → Actions → New repository secret`，名称填 `CONFIG_YAML`，值 = 你本地的 `config.yaml` 全文
-3. 完成。每天北京时间 21:35 / 21:50 / 22:05 / 23:00 / 23:05 / 23:30 / 23:55 自动执行，结果推送到微信
+3. 完成。每天北京时间 21:35–23:55 多档自动执行（含对冲延迟的提前档），结果推送到微信
 
 > 💡 为什么推荐私有仓库：你的凭据只通过 Secret 注入，不进代码库；Actions 免费额度对私有库也够用（每天跑一次绰绰有余）。
 
@@ -84,7 +84,7 @@ python main.py
 <details>
 <summary><b>运行报「服务器暂未返回今日计划」？</b></summary>
 
-跨午夜时段（约 0:00–1:00）服务器尚未发布当日计划，会返回 500，属正常现象，稍后再试即可。定时任务设在签到窗口内，不受影响。
+跨午夜时段（约 0:00–1:00）服务器尚未发布当日计划，会返回 500，属正常现象，稍后再试即可。延迟补跑一律落在签到窗口（21:30–23:59）外，会被静默跳过。
 </details>
 
 <details>

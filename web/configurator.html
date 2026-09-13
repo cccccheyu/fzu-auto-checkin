@@ -147,7 +147,7 @@
         <li>没有 GitHub 账号？<a href="https://github.com/signup" target="_blank">点这里免费注册</a>，1 分钟搞定（需要邮箱）。</li>
         <li><a href="https://github.com/new/import" target="_blank">点这里把项目导入到你自己的私有仓库</a>：① "Your old repository's clone URL" 填 <code>https://github.com/cccccheyu/fzu-auto-checkin</code>；② 仓库名随意；③ 选择 <b>Private</b>（私有，重要！你的密码只有你自己能看到）；④ 点 Begin import。</li>
         <li>导入完成后，在你的仓库页面依次打开：<code>Settings → Secrets and variables → Actions → New repository secret</code>，Name 填 <code>CONFIG_YAML</code>，Secret 粘贴上面复制的内容，点 Add secret。</li>
-        <li>完成！之后每晚 <b>21:35 / 21:50</b> 自动签到，可在仓库的 <code>Actions</code> 标签页查看签到记录。签到结果可回第 3 步配置微信推送。</li>
+        <li>完成！之后每晚 <b>20:05–23:55 十个档位</b>自动签到（层层兜底），可在仓库的 <code>Actions</code> 标签页查看签到记录。签到结果可回第 3 步配置微信推送。</li>
       </ol>
       <label style="margin-top:14px">方式 B：本地运行 —— 保存为仓库根目录的 config.yaml（需要自己有台常开的电脑）</label>
       <textarea id="outYaml" readonly></textarea>
@@ -160,7 +160,7 @@
   <div class="card folded" id="step5card">
     <h2><span class="step">5</span>已有 GitHub 账号？一键部署（最快）</h2>
     <p class="hint">没有账号？走上面<b>第 4 步</b>。</p>
-    <p class="hint">贴一个 Token 就行：自动替你创建<b>私有仓库</b>、写入全部代码和你的配置，之后每晚 21:35 / 21:50 自动签到。凭据只存在你自己的私有仓库里，不经过任何第三方服务器。</p>
+    <p class="hint">贴一个 Token 就行：自动替你创建<b>私有仓库</b>、写入全部代码和你的配置，之后每晚 20:05–23:55 十档自动签到。凭据只存在你自己的私有仓库里，不经过任何第三方服务器。</p>
     <label>GitHub Token</label>
     <input type="password" id="ghPat" placeholder="粘贴 ghp_ 开头的 token">
     <p class="hint">没有？<a href="https://github.com/settings/tokens/new?scopes=repo,workflow&description=fzu-checkin" target="_blank">点这里创建</a>——直达创建表单（未登录会先让你登录；中途若要求输入 GitHub 密码确认一次，属正常安全校验）。<code>repo</code>、<code>workflow</code> 两项权限已自动勾好。三步：① <b>Expiration 选 No expiration</b>——默认只有 30 天，到期后「一键写入」会静默失效；② 拉到页面底部点绿色 <b>Generate token</b>；③ 页面出现 <code>ghp_</code> 开头的 token，点旁边的复制按钮（<b>只显示这一次</b>）→ 粘贴过来。部署完成后建议删除该 token。</p>
@@ -307,8 +307,8 @@ if (coordManual) coordManual.addEventListener('click', e => {
 
 // —— 推送平台 ——
 const platMeta = {
-  pushplus:  { label:'PushPlus token', hint:'获取：<a href="https://www.pushplus.plus" target="_blank">pushplus.plus</a> 微信扫码登录 → 首页复制 token', url:k=>`https://www.pushplus.plus/send?token=${k}&title=福大晚点名测试推送&content=配置成功，每晚 21:35 自动签到。` },
-  serverchan:{ label:'Server酱 SendKey', hint:'获取：<a href="https://sct.ftqq.com" target="_blank">sct.ftqq.com</a> 微信扫码 → 复制 SendKey', url:k=>`https://sctapi.ftqq.com/${k}.send?title=福大晚点名测试推送&desp=配置成功，每晚 21:35 自动签到。` },
+  pushplus:  { label:'PushPlus token', hint:'获取：<a href="https://www.pushplus.plus" target="_blank">pushplus.plus</a> 微信扫码登录 → 首页复制 token', url:k=>`https://www.pushplus.plus/send?token=${k}&title=福大晚点名测试推送&content=配置成功，每晚多档自动签到。` },
+  serverchan:{ label:'Server酱 SendKey', hint:'获取：<a href="https://sct.ftqq.com" target="_blank">sct.ftqq.com</a> 微信扫码 → 复制 SendKey', url:k=>`https://sctapi.ftqq.com/${k}.send?title=福大晚点名测试推送&desp=配置成功，每晚多档自动签到。` },
   bark:      { label:'Bark key', hint:'获取：App Store 安装 Bark → 长按复制示例 URL，<b>整段粘贴到上面</b>，key 自动提取', url:k=>`https://api.day.app/${k}/福大晚点名测试推送/配置成功` },
 };
 // 粘贴自动提取：Bark 整段推送 URL / Server酱 URL / PushPlus 带 token 的 URL，都能直接贴
@@ -629,7 +629,7 @@ document.getElementById('deploy').addEventListener('click', async () => {
       dlog('ℹ️ 自动触发没成功（不影响定时签到），可到 Actions 页手动 Run workflow 验证');
     }
 
-    dlog('🎉 部署完成！今晚 21:35 / 21:50 自动开始。Token 建议现在去 GitHub 删掉（Settings → Developer settings → Tokens）。');
+    dlog('🎉 部署完成！今晚起多档自动开始。Token 建议现在去 GitHub 删掉（Settings → Developer settings → Tokens）。');
 
     // 补假期复用同一个 Token：只存在本次打开的内存里，不落盘、不上传
     const vp = document.getElementById('vacPat');
