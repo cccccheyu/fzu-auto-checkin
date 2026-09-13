@@ -49,7 +49,11 @@ def _pushplus(token: str, title: str, content: str) -> bool:
 def _bark(url: str, title: str, content: str) -> bool:
     if not url:
         return False
-    r = requests.post(url, json={"title": title, "body": content}, timeout=15)
+    # level=timeSensitive：iOS 时效性通知，穿透专注模式并要求立即投递
+    # （Bark 公共服务器高峰期受理后可能延迟 1 小时才到手机，时效级别可显著缓解）
+    r = requests.post(
+        url, json={"title": title, "body": content, "level": "timeSensitive"}, timeout=15
+    )
     print(f"[notify] bark -> {r.status_code}")
     return r.status_code == 200
 
