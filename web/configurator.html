@@ -127,6 +127,7 @@
       <a class="btn ghost" id="btnNoAcc" href="#step4card" style="flex:1;min-width:220px">🙋 我没有 GitHub 账号<br><small>走第 4 步：先注册，跟着引导一步步配</small></a>
       <a class="btn ghost" id="btnHasAcc" href="#step5card" style="flex:1;min-width:220px">⚡ 我有 GitHub 账号<br><small>走第 5 步：贴 Token 一键部署，最快</small></a>
     </div>
+    <p class="hint" style="margin-top:10px">💡 完全不想碰 GitHub？也可以：填完上面 1~3 步后，走第 4 步的<b>方式 B</b>——下载一个 <code>setup.bat</code> 装到自己的电脑上（需要电脑到点开着或睡眠）。</p>
   </div>
 
   <!-- 第 4 步 手动（没有账号） -->
@@ -148,10 +149,12 @@
         <li>导入完成后，在你的仓库页面依次打开：<code>Settings → Secrets and variables → Actions → New repository secret</code>，Name 填 <code>CONFIG_YAML</code>，Secret 粘贴上面复制的内容，点 Add secret。</li>
         <li>完成！之后每晚 <b>20:05–23:55 十个档位</b>自动签到（层层兜底），可在仓库的 <code>Actions</code> 标签页查看签到记录。签到结果可回第 3 步配置微信推送。</li>
       </ol>
-      <label style="margin-top:14px">方式 B：本地运行 —— 保存为仓库根目录的 config.yaml（需要自己有台常开的电脑）</label>
+      <label style="margin-top:14px">方式 B：装在自己的电脑上（不用 GitHub）—— 下载脚本，双击一次全装好</label>
+      <button class="btn ghost" id="dlBat" style="margin-top:6px">💻 下载本地部署脚本 setup.bat（已含你的配置）</button>
+      <p class="hint">双击下载好的 <code>setup.bat</code>，它会自动：检查 Python → 下载项目代码 → 写入你的配置 → 装依赖 → 建 4 个每天 21:35 / 21:50 / 22:05 / 23:40 的计划任务 → 试运行一次（只验证，不真签、不打扰）。电脑上装过 Python 即可（没装脚本会给出国内镜像下载地址）。<b>注意：电脑关机的晚上不会签</b>——想完全省心还是选方式 A。</p>
+      <p class="hint" style="margin-top:10px">进阶：也可以自己手动部署——复制下面的 config.yaml 放进项目目录，详见仓库 README。</p>
       <textarea id="outYaml" readonly></textarea>
       <button class="btn ghost" data-copy="outYaml">📋 复制 config.yaml</button>
-      <p class="hint">操作详情见仓库 README。</p>
     </div>
   </div>
 
@@ -639,6 +642,116 @@ document.getElementById('deploy').addEventListener('click', async () => {
     btn.disabled = false;
     btn.textContent = '🚀 重试 / 继续部署';
   }
+});
+
+// —— 本地部署：生成 setup.bat（配置 base64 内嵌，双击即装，不碰 Git）——
+function buildBat(yaml) {
+  const b64 = b64utf8(yaml);
+  const L = [
+    '@echo off',
+    'setlocal EnableExtensions',
+    'chcp 65001 >nul',
+    'cd /d "%~dp0"',
+    'title 福大晚点名 · 本地部署',
+    'echo ==============================================',
+    'echo   福大晚点名自动签到 - 本地部署（含你的专属配置）',
+    'echo ==============================================',
+    'echo.',
+    'set "DIR=%USERPROFILE%\\fzu-checkin-local"',
+    '',
+    'echo [1/6] 检查 Python ...',
+    'set "PY="',
+    'python --version >nul 2>nul && set "PY=python"',
+    'if not defined PY py --version >nul 2>nul && set "PY=py"',
+    'if not defined PY (',
+    '    echo.',
+    '    echo   [X] 没检测到 Python，先装一个（一次性，约 2 分钟）：',
+    '    echo       打开下面这个国内镜像地址，下载 python-3.11.9-amd64.exe ：',
+    '    echo       https://registry.npmmirror.com/-/binary/python/3.11.9/python-3.11.9-amd64.exe',
+    '    echo       安装时务必勾选 "Add python.exe to PATH"，装完重新双击本脚本。',
+    '    echo.',
+    '    pause',
+    '    exit /b 1',
+    ')',
+    'echo       OK，检测到 Python',
+    '',
+    'echo [2/6] 下载项目代码（打不开 GitHub 就挂下梯子，重新双击本脚本）...',
+    "powershell -NoProfile -Command \"$ProgressPreference='SilentlyContinue'; [Net.ServicePointManager]::SecurityProtocol='Tls12'; try { Invoke-WebRequest -Uri 'https://codeload.github.com/" + SRC_REPO + "/zip/refs/heads/main' -OutFile ($env:TEMP+'\\fzu-checkin.zip') -UseBasicParsing -TimeoutSec 60 } catch { exit 1 }\"",
+    'if errorlevel 1 (',
+    '    echo   [X] 下载失败：多半是 GitHub 连不上。挂梯子后重新双击本脚本，已完成的步骤会自动跳过。',
+    '    pause',
+    '    exit /b 1',
+    ')',
+    "powershell -NoProfile -Command \"$ProgressPreference='SilentlyContinue'; $d=$env:TEMP+'\\fzu-checkin-un'; if (Test-Path $d) { Remove-Item -Recurse -Force $d }; Expand-Archive -Force ($env:TEMP+'\\fzu-checkin.zip') $d\"",
+    'set "SRC=%TEMP%\\fzu-checkin-un\\fzu-auto-checkin-main"',
+    'if not exist "%SRC%\\main.py" (',
+    '    echo   [X] 解压后没找到 main.py，下载可能不完整，重新双击本脚本再试。',
+    '    pause',
+    '    exit /b 1',
+    ')',
+    'echo       OK，代码已下载',
+    '',
+    'echo [3/6] 安装到 %DIR% ...',
+    'if not exist "%DIR%" mkdir "%DIR%"',
+    'xcopy "%SRC%\\src" "%DIR%\\src\\" /E /I /Y >nul',
+    'copy /Y "%SRC%\\main.py" "%DIR%\\" >nul',
+    'copy /Y "%SRC%\\requirements.txt" "%DIR%\\" >nul',
+    'echo       OK',
+    '',
+    'echo [4/6] 写入你的专属配置 config.yaml（含账号信息，只存在你自己电脑上）...',
+    'set "B64=' + b64 + '"',
+    '> "%DIR%\\_cfg.b64" echo %B64%',
+    "powershell -NoProfile -Command \"[IO.File]::WriteAllText($env:USERPROFILE+'\\fzu-checkin-local\\config.yaml', [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String((Get-Content ($env:USERPROFILE+'\\fzu-checkin-local\\_cfg.b64')))), (New-Object System.Text.UTF8Encoding($false)))\"",
+    'del "%DIR%\\_cfg.b64" >nul 2>nul',
+    'echo       OK',
+    '',
+    'echo [5/6] 安装依赖（首次约 1 分钟）...',
+    '%PY% -m pip install -q -r "%DIR%\\requirements.txt" -i https://pypi.tuna.tsinghua.edu.cn/simple',
+    'if errorlevel 1 (',
+    '    echo   [X] 依赖安装失败：检查网络后重新双击本脚本，已完成的步骤会自动跳过。',
+    '    pause',
+    '    exit /b 1',
+    ')',
+    'echo       OK',
+    '',
+    'echo [6/6] 创建每天 21:35 / 21:50 / 22:05 / 23:40 的计划任务 ...',
+    '> "%DIR%\\run.bat" echo @echo off',
+    '>> "%DIR%\\run.bat" echo cd /d "%%~dp0"',
+    '>> "%DIR%\\run.bat" echo %PY% main.py ^>^> run.log 2^>^&1',
+    'schtasks /Create /F /TN "FZU-Checkin-1" /SC DAILY /ST 21:35 /TR "\\"%DIR%\\run.bat\\"" >nul 2>nul',
+    'schtasks /Create /F /TN "FZU-Checkin-2" /SC DAILY /ST 21:50 /TR "\\"%DIR%\\run.bat\\"" >nul 2>nul',
+    'schtasks /Create /F /TN "FZU-Checkin-3" /SC DAILY /ST 22:05 /TR "\\"%DIR%\\run.bat\\"" >nul 2>nul',
+    'schtasks /Create /F /TN "FZU-Checkin-4" /SC DAILY /ST 23:40 /TR "\\"%DIR%\\run.bat\\"" >nul 2>nul',
+    'echo       OK（若被安全软件拦截，每天手动双击 %DIR%\\run.bat 也能签）',
+    '',
+    'echo.',
+    'echo [试运行] 验证配置 / 登录 / 服务器连通（只检查，不真签，不会推送）...',
+    'set "FZU_CHECKIN_FORCE=1"',
+    '%PY% "%DIR%\\main.py"',
+    'echo.',
+    'echo ==============================================',
+    'echo   完成！',
+    'echo   - 每天 21:35 / 21:50 / 22:05 / 23:40 自动签到',
+    'echo   - 电脑开着或睡眠都行（睡眠会被自动唤醒执行）',
+    'echo   - 电脑关机的晚上不会签；介意的话再按配置页',
+    'echo     方式 A 配一份 GitHub 云端做兜底',
+    'echo   - 运行记录在 %DIR%\\run.log',
+    'echo ==============================================',
+    'pause',
+  ];
+  return L.join('\r\n');
+}
+document.getElementById('dlBat').addEventListener('click', () => {
+  let yaml;
+  try { yaml = buildYaml(); } catch (e) { return; }
+  const blob = new Blob([buildBat(yaml)], { type: 'application/octet-stream' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'fzu-checkin-setup.bat';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
 });
 
 // —— 补假期：一键写入仓库（只替换 config.yaml 里的 vacation: 段，其余原样保留）——

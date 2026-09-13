@@ -9,6 +9,7 @@ from src.notify import notify
 from src.vacation import matched_range, today_cn
 
 import datetime
+import os
 import re
 import time
 
@@ -37,14 +38,17 @@ def main():
 
     # GitHub 定时档实测常被延迟 1-4 小时（晚间档可能整批拖到凌晨）：
     # 窗口外到达的运行一律静默跳过（不登录、不推送）；
-    # 卡在窗口边缘（21:30-21:34）的运行等满 21:35 再签，避开服务器刚开窗的边界
+    # 卡在窗口边缘（21:30-21:34）的运行等满 21:35 再签，避开服务器刚开窗的边界；
+    # FZU_CHECKIN_FORCE=1（本地部署脚本试运行用）：绕过窗口限制，只验证连通不真签
+    force = bool(os.environ.get("FZU_CHECKIN_FORCE"))
     now = beijing_now()
-    if datetime.time(21, 30) <= now.time() < datetime.time(21, 35):
+    if datetime.time(21, 30) <= now.time() < datetime.time(21, 35) and not force:
         wait = (datetime.datetime.combine(now.date(), datetime.time(21, 35)) - now).total_seconds()
         print(f"当前北京时间 {now:%H:%M}，等待 {int(wait) + 1} 秒到 21:35 再执行")
         time.sleep(max(wait, 0) + 1)
         now = beijing_now()
-    if not (datetime.time(21, 35) <= now.time() <= datetime.time(23, 59, 59)):
+    in_window = datetime.time(21, 35) <= now.time() <= datetime.time(23, 59, 59)
+    if not in_window and not force:
         print(f"北京时间 {now:%H:%M} 不在晚点名窗口（21:35-23:59），判定为延迟触发的补跑，静默跳过。")
         return
 
@@ -85,6 +89,13 @@ def main():
             print("（兜底跑：仍无计划数据，静默跳过，不再重复推送）")
         return
     init_data = status["init"]
+
+    if not in_window and force:
+        # 本地部署脚本试运行：只验证配置 / 登录 / 服务器连通，不真签、不推送
+        state = "已签到（无需操作）" if not status["need_checkin"] else "待签到（今晚 21:35 起自动执行）"
+        print("[试运行] 配置读取 ✅  登录/Token ✅  服务器连通 ✅")
+        print(f"[试运行] 今日状态：{state}")
+        return
 
     if not status["need_checkin"]:
         # 静默：21:35 首跑成功时已推送过，21:50 兜底跑只需记日志，不再打扰
