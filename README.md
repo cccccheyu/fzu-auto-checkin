@@ -13,7 +13,7 @@
 ## 功能
 
 - ⏰ 定时自动签到（每晚 21:35–23:55 七个主档层层兜底，另设 20:05 / 20:35 / 21:05 提前档对冲 GitHub 定时延迟）
-- 📲 签到结果微信推送（Server酱 / PushPlus / Bark / 企业微信）
+- 📲 签到结果微信推送（Server酱 / Bark / 企业微信）
 - 🔑 支持学号密码全自动登录，token 过期自动换新，无需手工维护
 - 📍 定位校验预检：坐标不在校区内会明确报错，不会乱点
 
@@ -47,7 +47,7 @@ cp config.example.yaml config.yaml
 | `user.token` | 免登 token（可选项，与账密二选一即可） | 见 [docs/protocol.md](docs/protocol.md) §4 |
 | `checkin.longitude` / `latitude` | 你在校区内宿舍楼的坐标 | 打开[高德坐标拾取器](https://lbs.amap.com/tools/picker) → 搜索你的宿舍楼 → 复制"经度,纬度" |
 | `checkin.actual_location` | 打卡上报的地址文案 | 如「福州大学旗山校区生活区X号楼」 |
-| `notify.*` | 推送渠道（填一种即可） | [Server酱](https://sct.ftqq.com) / [PushPlus](https://www.pushplus.plus) 注册即得 key |
+| `notify.*` | 推送渠道（填一种即可） | [Server酱](https://sct.ftqq.com) 扫码即得 SendKey；iPhone 推荐装 [Bark](https://apps.apple.com/app/bark-customed-notifications/id1403753865) |
 
 ### 第 3 步 · 跑起来
 

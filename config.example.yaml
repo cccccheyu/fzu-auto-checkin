@@ -43,6 +43,6 @@ vacation:
 notify:
   type: "serverchan"    # serverchan | pushplus | bark | wecom | none
   serverchan_key: ""    # Server酱 Turbo SendKey
-  pushplus_token: ""    # PushPlus token
+  pushplus_token: ""    # PushPlus token（新用户需实名认证才能用；已有 token 者可用，一般建议 Server酱 / Bark）
   bark_url: ""          # Bark 推送完整 URL
   wecom_webhook: ""     # 企业微信群机器人 webhook
