@@ -1,4 +1,0 @@
-# 依赖
-requests>=2.31.0
-PyYAML>=6.0
-pycryptodome>=3.20.0   # AES-128-CBC（晚点名接口参数加密）
