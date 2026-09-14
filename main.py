@@ -78,16 +78,41 @@ def main():
     try:
         status = query_today_task(client, cfg)
     except requests.HTTPError as e:
-        # 跨午夜时段（约 0:00-1:00）服务器尚未发布当日计划时会返回 500，
-        # 属正常现象；定时任务设在窗口内（21:35 起十档）不受影响。
-        title = "智汇福大晚点名：服务器暂未返回今日计划"
-        print(title, e)
-        # 21:45 前视为首跑，推送提醒一次即可；21:50/22:05 兜底跑静默，避免一晚连推三条
-        if beijing_now().time() < datetime.time(21, 45):
-            notify(cfg, title, "服务器暂时无今日计划数据（跨天时段/服务波动），本次跳过。稍后自动重试无需操作。")
+        # init 返回 500 的两种原因：
+        #  a) 跨午夜时段（约 0:00-1:00）服务器尚未发布当日计划（属正常，稍后自愈）
+        #  b) token 已失效/过期（服务器对无效 token 也返回 500 而不是 401）
+        # token 失效时若还有学号密码，立即重新登录换新 token 重试一次——否则会
+        # 「明明有签到计划却报无计划」，白丢一晚。
+        username = (cfg.get("user") or {}).get("username", "")
+        password = (cfg.get("user") or {}).get("password", "")
+        if username and password:
+            print(f"init 返回 {e}，尝试重新登录换 token 后重试…")
+            status = None
+            try:
+                from src.login import login as sso_login
+
+                token = sso_login(username, password)
+                _save_token(cfg, token)
+                client = AttnClient(token)
+                status = query_today_task(client, cfg)
+                print("重新登录成功，已用新 token 继续。")
+            except Exception as e2:
+                title = "智汇福大晚点名：服务器暂未返回今日计划"
+                print(title, "（重登也失败）", e2)
+                if beijing_now().time() < datetime.time(21, 45):
+                    notify(cfg, title, f"服务器未返回今日计划，重新登录也失败：{e2}\n如需请手动打开 App 确认。")
+                return
+            if status is None:
+                return
         else:
-            print("（兜底跑：仍无计划数据，静默跳过，不再重复推送）")
-        return
+            title = "智汇福大晚点名：服务器暂未返回今日计划"
+            print(title, e)
+            # 21:45 前视为首跑，推送提醒一次即可；21:50/22:05 兜底跑静默，避免一晚连推三条
+            if beijing_now().time() < datetime.time(21, 45):
+                notify(cfg, title, "服务器暂时无今日计划数据（跨天时段/服务波动），本次跳过。稍后自动重试无需操作。")
+            else:
+                print("（兜底跑：仍无计划数据，静默跳过，不再重复推送）")
+            return
     init_data = status["init"]
 
     if force:

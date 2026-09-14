@@ -131,9 +131,15 @@ def query_today_task(client: AttnClient, cfg: dict) -> dict:
     """查询当天状态。返回 {"need_checkin": bool, "init": init响应}。"""
     data = client.init()
     user = (data.get("userData") or {})
-    # FState 取值：未签到 / SUCCESS（已签）/ 已签到（兼容不同版本）
-    done_states = {"SUCCESS", "已签到"}
-    return {"need_checkin": user.get("FState") not in done_states, "init": data}
+    # 已签到判定不能只看固定词：服务器版本间取值不一（SUCCESS / 已签到 / 有签到时间）。
+    # FCheckInTime 为空或含「未」即视为未签；再兜底看 FState。
+    state = str(user.get("FState") or "").strip()
+    checkin_time = str(user.get("FCheckInTime") or "").strip()
+    if checkin_time:
+        need = ("未" in checkin_time) or not checkin_time
+    else:
+        need = state.upper() not in {"SUCCESS", "已签到"}
+    return {"need_checkin": need, "init": data}
 
 
 def do_checkin(client: AttnClient, cfg: dict, init_data: dict) -> bool:
