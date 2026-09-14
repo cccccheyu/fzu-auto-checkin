@@ -309,7 +309,7 @@ if (coordManual) coordManual.addEventListener('click', e => {
 
 // —— 推送平台 ——
 const platMeta = {
-  serverchan:{ label:'Server酱 SendKey', hint:'获取：<a href="https://sct.ftqq.com" target="_blank">sct.ftqq.com</a> 微信扫码 → 复制 SendKey', url:k=>`https://sctapi.ftqq.com/${k}.send?title=福大晚点名测试推送&desp=配置成功，每晚多档自动签到。` },
+  serverchan:{ label:'Server酱 SendKey', hint:'获取：<a href="https://sct.ftqq.com" target="_blank">sct.ftqq.com</a> ①微信扫二维码登录 → ②首页复制 SendKey（SCP 开头）→ ③粘贴到这里 → ④微信里关注「方糖」服务号（不关注收不到推送）', url:k=>`https://sctapi.ftqq.com/${k}.send?title=福大晚点名测试推送&desp=配置成功，每晚多档自动签到。` },
   bark:      { label:'Bark key', hint:'获取：App Store 安装 Bark → 长按复制示例 URL，<b>整段粘贴到上面</b>，key 自动提取', url:k=>`https://api.day.app/${k}/福大晚点名测试推送/配置成功` },
 };
 // 粘贴自动提取：Bark 整段推送 URL / Server酱 URL，都能直接贴
