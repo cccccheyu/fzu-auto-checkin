@@ -100,6 +100,7 @@
     </div>
     <p class="hint" id="coordFallback" style="display:none">定位不成功？<a href="#" id="coordManual">手动填写坐标</a>（格式 119.xxxxx / 26.xxxxx）</p>
     <p class="hint">浏览器定位需授权且要求 HTTPS：微信内打不开时，用 Safari/Chrome 打开本页。工具不伪造定位。</p>
+    <p class="hint">签前护栏：坐标必须落在你所在校区范围内（已内置福大各校区），明显不在校区的坐标会被拦截、不会真的签到。</p>
   </div>
 
   <!-- 第 3 步 推送 -->
@@ -383,6 +384,25 @@ document.getElementById('agree2').addEventListener('change', e => {
   document.getElementById('deploy').disabled = !e.target.checked;
 });
 
+// —— 定位护栏：福州大学各校区边界盒（GCJ-02，与 src/campus.py 的 DEFAULT_BOUNDS 保持一致）——
+// 宽泛范围，用于拦明显不在校区的坐标；精确围栏仍由服务端判定。
+const CAMPUS = {
+  "旗山校区":       { min_lng: 119.16, max_lng: 119.24, min_lat: 26.02, max_lat: 26.09 },
+  "怡山校区":       { min_lng: 119.25, max_lng: 119.31, min_lat: 26.04, max_lat: 26.10 },
+  "铜盘校区":       { min_lng: 119.23, max_lng: 119.30, min_lat: 26.08, max_lat: 26.14 },
+  "晋江校区":       { min_lng: 118.54, max_lng: 118.64, min_lat: 24.51, max_lat: 24.61 },
+  "泉港校区":       { min_lng: 118.80, max_lng: 118.90, min_lat: 25.09, max_lat: 25.18 },
+  "厦门集美校区":   { min_lng: 118.05, max_lng: 118.13, min_lat: 24.59, max_lat: 24.68 },
+  "厦门鼓浪屿校区": { min_lng: 118.02, max_lng: 118.10, min_lat: 24.41, max_lat: 24.48 },
+};
+function matchCampus(lng, lat) {
+  for (const name in CAMPUS) {
+    const b = CAMPUS[name];
+    if (lng >= b.min_lng && lng <= b.max_lng && lat >= b.min_lat && lat <= b.max_lat) return name;
+  }
+  return null;
+}
+
 // —— 生成 ——
 document.getElementById('gen').addEventListener('click', () => {
   const yaml = buildYaml();
@@ -403,6 +423,14 @@ function buildYaml() {
     user = `user:\n  token: "${v('token')}"\n  username: ""\n  password: ""`;
   }
   if (!v('lng') || !v('lat')) { alert('坐标还没填（第 2 步）'); throw ''; }
+  const lngN = parseFloat(v('lng')), latN = parseFloat(v('lat'));
+  const myCampus = matchCampus(lngN, latN);
+  if (!myCampus && !confirm('⚠️ 坐标 (' + lngN + ', ' + latN + ') 不在已知校区范围内。\n\n' +
+      '即使现在继续生成，每日签前也会被拦截、不会真的签到。\n\n请先回第 2 步核对坐标；确定要继续吗？')) throw '';
+  const campusYaml = Object.keys(CAMPUS).map(n => {
+    const b = CAMPUS[n];
+    return `    "${n}":\n      min_lng: ${b.min_lng}\n      max_lng: ${b.max_lng}\n      min_lat: ${b.min_lat}\n      max_lat: ${b.max_lat}`;
+  }).join('\n');
   const platCfg = plat === 'none' ? '' :
     plat === 'serverchan' ? `notify:\n  type: "serverchan"\n  serverchan_key: "${normKey()}"` :
     `notify:\n  type: "bark"\n  bark_url: "https://api.day.app/${normKey()}"`;
@@ -412,7 +440,13 @@ ${user}
 checkin:
   longitude: "${v('lng')}"
   latitude: "${v('lat')}"
-  actual_location: "福州大学旗山校区"
+  actual_location: "福州大学${myCampus || ''}"
+
+# 定位护栏：签前校验上面坐标必须落在下面任一校区边界盒内，越界则拒绝签到并推送提醒
+# （软约束，防止误填/离校代签；精确围栏仍由服务端判定，此盒取宽泛范围防误拦）
+campus:
+  bounds:
+${campusYaml}
 
 vacation:
   notify: false
