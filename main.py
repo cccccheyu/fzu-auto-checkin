@@ -79,7 +79,7 @@ def main():
         status = query_today_task(client, cfg)
     except requests.HTTPError as e:
         # 跨午夜时段（约 0:00-1:00）服务器尚未发布当日计划时会返回 500，
-        # 属正常现象；定时任务设在 21:35/21:50/22:05 不受影响。
+        # 属正常现象；定时任务设在窗口内（21:35 起十档）不受影响。
         title = "智汇福大晚点名：服务器暂未返回今日计划"
         print(title, e)
         # 21:45 前视为首跑，推送提醒一次即可；21:50/22:05 兜底跑静默，避免一晚连推三条
@@ -90,11 +90,13 @@ def main():
         return
     init_data = status["init"]
 
-    if not in_window and force:
-        # 本地部署脚本试运行：只验证配置 / 登录 / 服务器连通，不真签、不推送
-        state = "已签到（无需操作）" if not status["need_checkin"] else "待签到（今晚 21:35 起自动执行）"
+    if force:
+        # 本地部署脚本试运行：只验证配置 / 登录 / 服务器连通，不真签、不推送。
+        # 无论是否在签到窗口内都保持只读——避免"试运行"意外产生真实打卡。
+        state = "已签到（无需操作）" if not status["need_checkin"] else "待签到（到点会自动执行）"
         print("[试运行] 配置读取 ✅  登录/Token ✅  服务器连通 ✅")
         print(f"[试运行] 今日状态：{state}")
+        print("[试运行] 仅验证，不签到、不推送；正式签到由计划任务在 21:35 起自动完成")
         return
 
     if not status["need_checkin"]:
