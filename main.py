@@ -7,6 +7,7 @@ from src.config import load_config
 from src.checkin import AttnClient, query_today_task, do_checkin, beijing_now
 from src.notify import notify
 from src.vacation import matched_range, today_cn
+from src.campus import match_campus
 
 import datetime
 import os
@@ -59,6 +60,34 @@ def main():
         if (cfg.get("vacation") or {}).get("notify"):
             notify(cfg, f"智汇福大晚点名：假期中，已跳过（{vac}）", "假期期间自动签到暂停。")
         return
+
+    # 定位签到护栏：签前校验配置坐标必须落在任一校区范围内（软约束，防误填/防离校代签）。
+    # 服务端 check.action 仍会做精确多边形围栏，这里只是「快速失败」——
+    # 明显不对的坐标直接不发签到请求，并把原因推给用户，避免"按了没反应"。
+    try:
+        lng = float((cfg.get("checkin") or {}).get("longitude"))
+        lat = float((cfg.get("checkin") or {}).get("latitude"))
+    except (TypeError, ValueError):
+        lng = lat = None
+    if lng is None or lat is None:
+        title = "智汇福大晚点名：坐标未配置 ❌"
+        print(f"{title} 请填写 config.yaml 的 checkin.longitude / latitude")
+        if not force:
+            notify(cfg, title,
+                   "未读到有效坐标，本次未签到。请在 config.yaml 的 checkin.longitude / latitude 填入你的坐标。")
+        return
+    campus = match_campus(lng, lat, cfg)
+    if campus is None:
+        title = "智汇福大晚点名：坐标不在校区范围，已拦截 ❌"
+        print(f"{title} 坐标=({lng}, {lat})")
+        if force:
+            print("[试运行] 坐标不在任何校区范围内，正式运行会被拦截，请先核对坐标")
+        else:
+            notify(cfg, title,
+                   "配置的坐标不在任何校区范围内，今日签到已拦截。请核对 config.yaml 的 "
+                   "checkin.longitude / latitude；若你在其他校区，可在 campus.bounds 里补上该校区范围。")
+        return
+    print(f"定位护栏通过：坐标 ({lng}, {lat}) 命中「{campus}」")
 
     token = (cfg.get("user") or {}).get("token", "")
     if not token:
