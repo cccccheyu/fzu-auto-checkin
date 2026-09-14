@@ -49,8 +49,9 @@ def _pushplus(token: str, title: str, content: str) -> bool:
 def _bark(url: str, title: str, content: str) -> bool:
     if not url:
         return False
-    # level=timeSensitive：iOS 时效性通知，穿透专注模式并要求立即投递
-    # （Bark 公共服务器高峰期受理后可能延迟 1 小时才到手机，时效级别可显著缓解）
+    # level=timeSensitive：iOS 时效性通知，穿透专注模式、要求立即投递。
+    # 普通级别推送在夜间（睡眠/勿扰/低电量）会被 iOS 延后投递，这是"几小时后才收到"的常见原因；
+    # 手机端还需在「设置 → 通知 → Bark」开启时效性通知，或把 Bark 加进专注模式白名单。
     r = requests.post(
         url, json={"title": title, "body": content, "level": "timeSensitive"}, timeout=15
     )

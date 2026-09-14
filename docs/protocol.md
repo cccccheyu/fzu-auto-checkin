@@ -72,21 +72,23 @@ AES-128-CBC，KEY = IV = "apexinfoapexinfo"，PKCS7，输出 Base64
 
 token 由 App 登录后下发，获取方式按成本排序：
 
-1. **Android 真机/模拟器 + adb**（已验证，最简单）：
+1. **CAS 自动登录（首选，已实现于 `src/login.py`）**：
+   脚本用学号 + 密码走 `sso.fzu.edu.cn` 统一身份认证（就是智汇福大 App 的登录账号），
+   自动换出晚点名 token 并回写 config.yaml，无需手工维护；token 失效会重新登录。
+   协议要点（逆向自新版 Angular 登录页）：
+   - `GET /login?service=<晚点名callback>` → 从页面解析 `#login-croypto`（一次性密钥，Base64）与 `#login-page-flowkey`（execution）
+   - `password` 字段 = AES-128-ECB-PKCS7(key=croypto, data=明文密码) 的 Base64
+   - `POST /login?service=...`（`type=UsernamePassword, _eventId=submit, execution, croypto, username, password`）
+   - 成功后 302 链 → `callback.action?ticket=ST-xxx` → 取出 `token`
+   - 若服务器要求验证码，登录会失败并在页面返回错误信息（脚本会明确报错）
+
+2. **Android 真机/模拟器 + adb**（备选，不需要密码）：
    ```bash
    adb logcat -d | grep -oE "index\.action\?token=[A-Za-z0-9]+" | tail -1
    ```
    前提：手机上打开过一次晚点名页面。token 有效期未知，失效重取即可。
 
-2. **CAS 自动登录**（TODO，`src/login.py`）：
-   走 `sso.fzu.edu.cn` 统一身份认证（即智汇福大 App 登录用的学号+密码），
-   登录成功 → ticket → callback 换 token。
-   实现后无需手动获取 token，适合 GitHub Actions 云端长期运行。
-   注意：sso.fzu.edu.cn 是新版前端（登录表单 JS 动态渲染 + clientredirect 多端适配），
-   需继续分析其前端 JS 的密码加密与提交接口，工作量中等。
-
-3. iOS 用户：无越狱抓不到 App 内 token（SSL Pinning）。建议等 CAS 方案，
-   或借用任意一台 Android 设备执行方式 1 一次。
+3. iOS 用户：App 内 token 因 SSL Pinning 抓不到，直接走上面的 CAS 方案即可，无需 Android 设备。
 
 ## 5. 免责声明
 
