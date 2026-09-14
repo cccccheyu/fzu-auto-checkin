@@ -56,7 +56,7 @@ cp config.example.yaml config.yaml
 | `user.token` | 免登 token（可选项，与账密二选一即可） | 见 [docs/protocol.md](docs/protocol.md) §4 |
 | `checkin.longitude` / `latitude` | 你在校区内宿舍楼的坐标 | 打开[高德坐标拾取器](https://lbs.amap.com/tools/picker) → 搜索你的宿舍楼 → 复制"经度,纬度" |
 | `checkin.actual_location` | 打卡上报的地址文案 | 如「福州大学旗山校区生活区X号楼」 |
-| `notify.*` | 推送渠道（填一种即可） | [Server酱](https://sct.ftqq.com) 扫码即得 SendKey；iPhone 推荐装 [Bark](https://apps.apple.com/app/bark-customed-notifications/id1403753865) |
+| `notify.*` | 推送渠道（填一种即可） | [Server酱](https://sct.ftqq.com)：微信扫码登录 → 首页复制 SendKey（SCP 开头）→ 微信里需关注「方糖」服务号才能收到；iPhone 推荐 [Bark](https://apps.apple.com/app/bark-customed-notifications/id1403753865)（注意：重装 App 会换 key，收不到推送先核对 key） |
 
 ### 第 3 步 · 跑起来
 
