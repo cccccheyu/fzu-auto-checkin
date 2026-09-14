@@ -91,8 +91,6 @@ python main.py
 
 ## 常见问题
 
-> 下面这些问题都是部署过程中真实踩过的，遇到同类情况先在这里找一遍。
-
 <details>
 <summary><b>部署卡在「GitHub 网络问题 / 超时」，或者 Token 校验失败？</b></summary>
 
