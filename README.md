@@ -56,7 +56,7 @@ cp config.example.yaml config.yaml
 | `user.token` | 免登 token（可选项，与账密二选一即可） | 见 [docs/protocol.md](docs/protocol.md) §4 |
 | `checkin.longitude` / `latitude` | 你在校区内宿舍楼的坐标 | 打开[高德坐标拾取器](https://lbs.amap.com/tools/picker) → 搜索你的宿舍楼 → 复制"经度,纬度" |
 | `checkin.actual_location` | 打卡上报的地址文案 | 如「福州大学旗山校区生活区X号楼」 |
-| `notify.*` | 推送渠道（填一种即可） | [Server酱](https://sct.ftqq.com)：微信扫码登录 → 首页复制 SendKey（SCP 开头）→ 微信里需关注「方糖」服务号才能收到；iPhone 推荐 [Bark](https://apps.apple.com/app/bark-customed-notifications/id1403753865)（注意：重装 App 会换 key，收不到推送先核对 key） |
+| `notify.*` | 推送渠道（填一种即可） | [Server酱](https://sct.ftqq.com)：微信扫码登录 → 首页复制 SendKey（SCP 开头）→ 微信里需关注「方糖」服务号才能收到；iPhone 推荐 [Bark](https://apps.apple.com/app/bark-customed-notifications/id1403753865)（**收不到 / 深夜才收到**：见下方常见问题「iPhone 收不到推送」） |
 
 ### 第 3 步 · 跑起来
 
@@ -136,7 +136,20 @@ vacation:
 <details>
 <summary><b>iOS 用户能用吗？</b></summary>
 
-能，而且是最省事的用法：脚本跑在 GitHub Actions 云端，iPhone 只收微信推送，什么都不用装。
+能，而且是最省事的用法：脚本跑在 GitHub Actions 云端，iPhone 只收推送，什么都不用装。用 Bark 或 Server酱 都可以。
+</details>
+
+<details>
+<summary><b>iPhone 收不到推送，或者深夜才收到？</b></summary>
+
+两个原因，按这个顺序排查：
+
+1. **专注模式把通知压后了**（最常见）。iOS 在「睡眠」「勿扰」时段会把**普通级**推送扣到下次解锁才投递，表现就是推送明明当晚发出，你凌晨才收到。解法：`设置 → 专注模式 → 睡眠（顺手把勿扰也加一遍）→ App → 允许的 App → 添加 Bark`。进了白名单就能穿透专注模式，即时弹出来。
+2. **Bark 的 key 变了**。重装 App、换手机、重新登录 Bark 都会换设备 key，旧 key 的推送会被**静默丢弃**（服务端照样返回成功，所以看不出问题）。打开 Bark App 首页，复制那串服务器地址，整段贴回配置即可。
+
+建议再顺手打开 `设置 → 通知 → Bark → 时效性通知`：本项目推送已带 `level: timeSensitive`（时效性级别，会被苹果优先投递），但这个开关**要 Bark 先收到过一条通知才会出现在列表里**——所以先让脚本发一条测试推送，再回设置里找。
+
+嫌麻烦也可以换 [Server酱](https://sct.ftqq.com)（走微信推送），配置页第 3 步选它、填个 SendKey 就行，代码零改动。
 </details>
 
 ## 工作原理
