@@ -54,7 +54,7 @@ cp config.example.yaml config.yaml
 |--------|--------|----------|
 | `user.username` / `user.password` | **登录智汇福大 App 的学号和密码**（推荐，全自动免维护） | 你平时登 App 用的那套 |
 | `user.token` | 免登 token（可选项，与账密二选一即可） | 见 [docs/protocol.md](docs/protocol.md) §4 |
-| `checkin.longitude` / `latitude` | 你在校区内宿舍楼的坐标 | 打开[高德坐标拾取器](https://lbs.amap.com/tools/picker) → 搜索你的宿舍楼 → 复制"经度,纬度" |
+| `checkin.longitude` / `latitude` | 打卡上报的坐标（要落在校区签到范围内，否则定位校验会拒绝打卡） | 打开[高德坐标拾取器](https://lbs.amap.com/tools/picker) → 搜索你的宿舍楼 → 复制"经度,纬度" |
 | `checkin.actual_location` | 打卡上报的地址文案 | 如「福州大学旗山校区生活区X号楼」 |
 | `notify.*` | 推送渠道（填一种即可） | [Server酱](https://sct.ftqq.com)：微信扫码登录 → 首页复制 SendKey（SCP 开头）→ 微信里需关注「方糖」服务号才能收到；iPhone 推荐 [Bark](https://apps.apple.com/app/bark-customed-notifications/id1403753865)（**收不到 / 深夜才收到**：见下方常见问题「iPhone 收不到推送」） |
 
@@ -239,7 +239,7 @@ vacation:
 <details>
 <summary><b>会不会被学校发现 / 算作弊吗？</b></summary>
 
-本项目只调用晚点名页面的**公开接口**，行为和你在 App 里点一下「签到」完全一致，不伪造定位（坐标不在校区会明确报错拒绝签到）、不伪造在离校状态。
+本项目只调用晚点名页面的**公开接口**，行为和你在 App 里点一下「签到」完全一致，不做任何绕过学校系统的操作。
 
 它的定位是**防止本人确实在校时因为忘记而漏签**。请勿用于向学校隐瞒真实在/离校状态，也请勿转卖或付费代挂——违规后果由使用者自行承担。长期不在校请走正规请假流程。
 </details>
