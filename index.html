@@ -148,7 +148,7 @@
         <li>没有 GitHub 账号？<a href="https://github.com/signup" target="_blank">点这里免费注册</a>，1 分钟搞定（需要邮箱）。</li>
         <li><a href="https://github.com/new/import" target="_blank">点这里把项目导入到你自己的私有仓库</a>：① "Your old repository's clone URL" 填 <code>https://github.com/cccccheyu/fzu-auto-checkin</code>；② 仓库名随意；③ 选择 <b>Private</b>（私有，重要！你的密码只有你自己能看到）；④ 点 Begin import。</li>
         <li>导入完成后，在你的仓库页面依次打开：<code>Settings → Secrets and variables → Actions → New repository secret</code>，Name 填 <code>CONFIG_YAML</code>，Secret 粘贴上面复制的内容，点 Add secret。</li>
-        <li>完成！之后每晚会排 <b>20:05–23:55 十个档位</b>自动签到。⚠️ 但 GitHub 的定时任务经常整批延迟到凌晨，那时已过签到截止（23:59）会被静默跳过，<b>所以云端是尽力而为、不保证签上</b>——想要稳，建议再装一份「方式 B」到本机。可在仓库的 <code>Actions</code> 标签页看每次运行的时间和日志。</li>
+        <li>完成！之后每天 <b>16:30–23:55 每 30 分钟一档（共 16 档）</b>自动签到。GitHub 的定时任务会整批延迟（实测 1.5~5 小时），这 16 档就是按这个特性铺的——延迟 7.5 小时内总有一档落进 21:35–23:59 的窗口。想要更稳，可再装一份「方式 B」到本机。可在仓库的 <code>Actions</code> 标签页看每次运行的时间和日志。</li>
       </ol>
       <label style="margin-top:14px">方式 B：装在自己的电脑上（不用 GitHub）—— 下载脚本，双击一次全装好</label>
       <button class="btn ghost" id="dlBat" style="margin-top:6px">💻 下载本地部署脚本 setup.bat（已含你的配置）</button>
@@ -163,7 +163,7 @@
   <div class="card folded" id="step5card">
     <h2><span class="step">5</span>已有 GitHub 账号？一键部署（最快）</h2>
     <p class="hint">没有账号？走上面<b>第 4 步</b>。</p>
-    <p class="hint">贴一个 Token 就行：自动替你创建<b>私有仓库</b>、写入全部代码和你的配置，之后每晚 20:05–23:55 排十档自动签到。⚠️ GitHub 定时任务会延迟（实测整批推迟 2~6 小时），延迟后往往已过签到截止，所以云端<b>尽力而为、不保证签上</b>；要准点稳签请再装一份「方式 B」。凭据只存在你自己的私有仓库里，不经过任何第三方服务器。</p>
+    <p class="hint">贴一个 Token 就行：自动替你创建<b>私有仓库</b>、写入全部代码和你的配置，之后每天 16:30–23:55 每 30 分钟一档（共 16 档）自动签到。GitHub 定时任务会整批延迟（实测 1.5~5 小时），这 16 档正是按延迟特性铺开，延迟 7.5 小时内仍有一档落进签到窗口。凭据只存在你自己的私有仓库里，不经过任何第三方服务器。</p>
     <label>GitHub Token</label>
     <input type="password" id="ghPat" placeholder="粘贴 ghp_ 开头的 token">
     <p class="hint">没有？<a href="https://github.com/settings/tokens/new?scopes=repo,workflow&description=fzu-checkin" target="_blank">点这里创建</a>——直达创建表单（未登录会先让你登录；中途若要求输入 GitHub 密码确认一次，属正常安全校验）。<code>repo</code>、<code>workflow</code> 两项权限已自动勾好。三步：① <b>Expiration 选 No expiration</b>——默认只有 30 天，到期后「一键写入」会静默失效；② 拉到页面底部点绿色 <b>Generate token</b>；③ 页面出现 <code>ghp_</code> 开头的 token，点旁边的复制按钮（<b>只显示这一次</b>）→ 粘贴过来。部署完成后建议删除该 token。</p>
@@ -770,7 +770,7 @@ function buildBat(yaml) {
     'echo   - 当晚 21:30~22:10 开着即可，21:35 首档签上后',
     'echo     随时可关机；保险起见可开到 23:45 最后一档跑完',
     'echo   - 电脑关机的晚上不会签；介意的话再按配置页',
-    'echo     方式 A 配一份 GitHub 云端试试 —— 但它不保证准点',
+    'echo     方式 A 配一份 GitHub 云端做兜底（已按延迟特性排档）',
     'echo   - 运行记录在 %DIR%\\run.log',
     'echo ==============================================',
     'pause',
