@@ -14,6 +14,12 @@
 
 福州大学「智汇福大」晚点名（21:30–23:59）的自动签到工具：**每晚定时自动打卡，结果可推送到微信 / iPhone**。手机零安装，iOS / 安卓都能用。
 
+<div align="center">
+  <a href="https://cccccheyu.github.io/fzu-auto-checkin/"><b>⚙️ 网页版配置生成器 — 填三步，一键部署（手机也能操作）</b></a><br>
+  <sub>手机扫码直接打开 👇</sub><br>
+  <a href="https://cccccheyu.github.io/fzu-auto-checkin/"><img src="assets/qr-configurator.png" width="126" alt="扫码打开配置页"></a>
+</div>
+
 > ⚠️ **使用须知**
 >
 > 晚点名是学校的安全确认制度。本项目仅用于**本人确实在校时防止漏签**，禁止用于向学校隐瞒真实在/离校状态，禁止付费代挂。违规后果由使用者自行承担。
