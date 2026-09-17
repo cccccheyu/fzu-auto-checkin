@@ -146,6 +146,9 @@ def _mark_confirmed(cfg):
 
     签到成功 / 签到失败 / 不在签到范围，都是当晚已送达的确定结论，
     心跳的价值（证明系统还活着）已经兑现，不必再来一条。
+
+    ⚠️ **只在推送成功后调用**（调用点见 main 末尾）。推送失败时必须不标记，
+    否则「结论没送到 + 心跳也被压掉」= 整晚零消息，正是 2026-09-16 的故障形态。
     """
     if _on_github_actions():
         return
@@ -305,13 +308,20 @@ def main():
     try:
         ok = do_checkin(client, cfg, init_data)
     except Exception as e:  # 接口报错（如不在时段/范围）要带原因推送
-        _notify(cfg, "智汇福大晚点名：签到失败 ❌", f"自动签到失败：{e}\n请手动打开 App 签到。")
+        if _notify(cfg, "智汇福大晚点名：签到失败 ❌", f"自动签到失败：{e}\n请手动打开 App 签到。"):
+            _mark_confirmed(cfg)
         return
 
     if ok:
-        _notify(cfg, "智汇福大晚点名：签到成功 ✅", "今日晚点名已自动签到成功。")
+        delivered = _notify(cfg, "智汇福大晚点名：签到成功 ✅", "今日晚点名已自动签到成功。")
     else:
-        _notify(cfg, "智汇福大晚点名：不在签到范围 ❌", "定位校验未命中任何校区，请确认配置的经纬度。")
+        delivered = _notify(cfg, "智汇福大晚点名：不在签到范围 ❌", "定位校验未命中任何校区，请确认配置的经纬度。")
+
+    # 只有「结论确实送到用户手上」才标记当晚已确认。
+    # 推送失败时不标记 → 后续档的 _daily_confirm 会补一条心跳当兜底报警，
+    # 正好覆盖 2026-09-16 那种「签到成功但推送丢了、整晚零消息」的故障。
+    if delivered:
+        _mark_confirmed(cfg)
 
 
 if __name__ == "__main__":
