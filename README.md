@@ -1,14 +1,6 @@
 # fzu-auto-checkin · 福州大学晚点名自动签到
 
-![License](https://img.shields.io/github/license/cccccheyu/fzu-auto-checkin)
-
-
-
-![Python](https://img.shields.io/badge/python-3.11+-blue)
-
-
-
-![GitHub Actions](https://img.shields.io/badge/cron-16%3A30%E2%80%9323%3A55%20%C3%9716-blue)
+![License](https://img.shields.io/github/license/cccccheyu/fzu-auto-checkin) ![Python](https://img.shields.io/badge/python-3.11+-blue) ![GitHub Actions](https://img.shields.io/badge/cron-16%3A30%E2%80%9323%3A55%20%C3%9716-blue)
 
 <div align="center"><img src="assets/fzu-checkin-promo.png" width="400" alt="晚点名自动签到宣传卡"></div>
 
