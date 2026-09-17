@@ -148,11 +148,13 @@
         <li>没有 GitHub 账号？<a href="https://github.com/signup" target="_blank">点这里免费注册</a>，1 分钟搞定（需要邮箱）。</li>
         <li><a href="https://github.com/new/import" target="_blank">点这里把项目导入到你自己的私有仓库</a>：① "Your old repository's clone URL" 填 <code>https://github.com/cccccheyu/fzu-auto-checkin</code>；② 仓库名随意；③ 选择 <b>Private</b>（私有，重要！你的密码只有你自己能看到）；④ 点 Begin import。</li>
         <li>导入完成后，在你的仓库页面依次打开：<code>Settings → Secrets and variables → Actions → New repository secret</code>，Name 填 <code>CONFIG_YAML</code>，Secret 粘贴上面复制的内容，点 Add secret。</li>
-        <li>完成！之后每天 <b>16:30–23:55 每 30 分钟一档（共 16 档）</b>自动签到。GitHub 的定时任务会整批延迟（实测 1.5~5 小时），这 16 档就是按这个特性铺的——延迟 7.5 小时内总有一档落进 21:35–23:59 的窗口。想要更稳，可再装一份「方式 B」到本机。可在仓库的 <code>Actions</code> 标签页看每次运行的时间和日志。</li>
+        <li>完成！之后每天 <b>16:30–23:55 每 30 分钟一档（共 16 档）</b>自动签到。GitHub 的定时任务会整批延迟（实测 1.5~5 小时），这 16 档就是按这个特性铺的——延迟 7 小时内总有一档落进 21:35–23:59 的窗口。想要更稳，可再装一份「方式 B」到本机。可在仓库的 <code>Actions</code> 标签页看每次运行的时间和日志。</li>
       </ol>
       <label style="margin-top:14px">方式 B：装在自己的电脑上（不用 GitHub）—— 下载脚本，双击一次全装好</label>
       <button class="btn ghost" id="dlBat" style="margin-top:6px">💻 下载本地部署脚本 setup.bat（已含你的配置）</button>
       <p class="hint">双击下载好的 <code>setup.bat</code>，它会自动：检查 Python → 下载项目代码 → 写入你的配置 → 装依赖 → 建 4 个每天 21:35 / 21:50 / 22:05 / 23:40 的计划任务 → 试运行一次（只验证，不真签、不打扰）。电脑上装过 Python 即可（没装脚本会给出国内镜像下载地址）。<b>注意：电脑关机的晚上不会签</b>——想完全省心还是选方式 A。</p>
+      <button class="btn ghost" id="dlUpdate" style="margin-top:10px">🔄 已经装过了？点这里「只更新程序」（账号和推送配置都不动）</button>
+      <p class="hint">程序修了问题或加了新功能时用这个：双击下载好的 <code>fzu-checkin-update.bat</code>，它只做一件事——把程序换成最新版。<b>你的账号、坐标、推送配置、计划任务全部原样保留，一个字都不用重填。</b>装完会自动试跑一次确认没问题。没装过的话请用上面那个 setup.bat。</p>
       <p class="hint" style="margin-top:10px">进阶：也可以自己手动部署——复制下面的 config.yaml 放进项目目录，详见仓库 README。</p>
       <textarea id="outYaml" readonly></textarea>
       <button class="btn ghost" data-copy="outYaml">📋 复制 config.yaml</button>
@@ -163,7 +165,7 @@
   <div class="card folded" id="step5card">
     <h2><span class="step">5</span>已有 GitHub 账号？一键部署（最快）</h2>
     <p class="hint">没有账号？走上面<b>第 4 步</b>。</p>
-    <p class="hint">贴一个 Token 就行：自动替你创建<b>私有仓库</b>、写入全部代码和你的配置，之后每天 16:30–23:55 每 30 分钟一档（共 16 档）自动签到。GitHub 定时任务会整批延迟（实测 1.5~5 小时），这 16 档正是按延迟特性铺开，延迟 7.5 小时内仍有一档落进签到窗口。凭据只存在你自己的私有仓库里，不经过任何第三方服务器。</p>
+    <p class="hint">贴一个 Token 就行：自动替你创建<b>私有仓库</b>、写入全部代码和你的配置，之后每天 16:30–23:55 每 30 分钟一档（共 16 档）自动签到。GitHub 定时任务会整批延迟（实测 1.5~5 小时），这 16 档正是按延迟特性铺开，延迟 7 小时内仍有一档落进签到窗口。凭据只存在你自己的私有仓库里，不经过任何第三方服务器。</p>
     <label>GitHub Token</label>
     <input type="password" id="ghPat" placeholder="粘贴 ghp_ 开头的 token">
     <p class="hint">没有？<a href="https://github.com/settings/tokens/new?scopes=repo,workflow&description=fzu-checkin" target="_blank">点这里创建</a>——直达创建表单（未登录会先让你登录；中途若要求输入 GitHub 密码确认一次，属正常安全校验）。<code>repo</code>、<code>workflow</code> 两项权限已自动勾好。三步：① <b>Expiration 选 No expiration</b>——默认只有 30 天，到期后「一键写入」会静默失效；② 拉到页面底部点绿色 <b>Generate token</b>；③ 页面出现 <code>ghp_</code> 开头的 token，点旁边的复制按钮（<b>只显示这一次</b>）→ 粘贴过来。部署完成后建议删除该 token。</p>
@@ -542,6 +544,8 @@ document.querySelectorAll('[data-copy]').forEach(b => {
 
 // —— 第 5 步：一键部署 ——
 const SRC_REPO = 'cccccheyu/fzu-auto-checkin';
+// 下载 zip 解压后的目录名（GitHub 固定为 <repo>-<分支名>）；geo 版改这两个常量即可
+const SRC_DIR = 'fzu-auto-checkin-main';
 const logEl = document.getElementById('log');
 function dlog(msg) {
   logEl.classList.remove('hide');
@@ -717,7 +721,7 @@ function buildBat(yaml) {
     '    exit /b 1',
     ')',
     "powershell -NoProfile -Command \"$ProgressPreference='SilentlyContinue'; $d=$env:TEMP+'\\fzu-checkin-un'; if (Test-Path $d) { Remove-Item -Recurse -Force $d }; Expand-Archive -Force ($env:TEMP+'\\fzu-checkin.zip') $d\"",
-    'set "SRC=%TEMP%\\fzu-checkin-un\\fzu-auto-checkin-main"',
+    'set "SRC=%TEMP%\\fzu-checkin-un\\' + SRC_DIR + '"',
     'if not exist "%SRC%\\main.py" (',
     '    echo   [X] 解压后没找到 main.py，下载可能不完整，重新双击本脚本再试。',
     '    pause',
@@ -784,6 +788,100 @@ document.getElementById('dlBat').addEventListener('click', () => {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = 'fzu-checkin-setup.bat';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+});
+
+// —— 只更新程序：给已装过的用户（不内嵌配置、不重建计划任务，config.yaml 原样保留）——
+// 背景：2026-09-17 修了「Windows 下签到成功却收不到通知」的 bug，但本机记忆只存坐标/
+// 推送平台/仓库名/假期，不存账号密码和推送密钥——让用户重装 = 得重填账号，极易漏配推送。
+// 所以单独给一条「只换程序文件」的升级通道。
+function buildUpdateBat() {
+  const L = [
+    '@echo off',
+    'setlocal EnableExtensions',
+    'chcp 65001 >nul',
+    'cd /d "%~dp0"',
+    'title 福大晚点名 · 更新程序',
+    'echo ==============================================',
+    'echo   福大晚点名自动签到 - 只更新程序（不动你的配置）',
+    'echo ==============================================',
+    'echo.',
+    'set "DIR=%USERPROFILE%\\fzu-checkin-local"',
+    '',
+    'echo [0/5] 检查这台电脑是否装过 ...',
+    'if not exist "%DIR%\\config.yaml" (',
+    '    echo.',
+    '    echo   [X] 在 %DIR% 没找到 config.yaml，说明还没装过。',
+    '    echo       请回配置页，用「方式 B」下载 setup.bat 完整安装一次。',
+    '    echo.',
+    '    pause',
+    '    exit /b 1',
+    ')',
+    'echo       OK，装过，继续更新',
+    '',
+    'echo [1/5] 检查 Python ...',
+    'set "PY="',
+    'python --version >nul 2>nul && set "PY=python"',
+    'if not defined PY py --version >nul 2>nul && set "PY=py"',
+    'if not defined PY (',
+    '    echo.',
+    '    echo   [X] 没检测到 Python。重新双击本脚本；',
+    '    echo       仍不行就回配置页用 setup.bat 重装一次（它会提示你装 Python）。',
+    '    echo.',
+    '    pause',
+    '    exit /b 1',
+    ')',
+    'echo       OK，检测到 Python',
+    '',
+    'echo [2/5] 下载最新代码（打不开 GitHub 就挂下梯子，重新双击本脚本）...',
+    "powershell -NoProfile -Command \"$ProgressPreference='SilentlyContinue'; [Net.ServicePointManager]::SecurityProtocol='Tls12'; try { Invoke-WebRequest -Uri 'https://codeload.github.com/" + SRC_REPO + "/zip/refs/heads/main' -OutFile ($env:TEMP+'\\fzu-checkin.zip') -UseBasicParsing -TimeoutSec 60 } catch { exit 1 }\"",
+    'if errorlevel 1 (',
+    '    echo   [X] 下载失败：多半是 GitHub 连不上。',
+    '    echo       挂梯子后重新双击本脚本；你原来的程序不受影响，今晚照常签到。',
+    '    pause',
+    '    exit /b 1',
+    ')',
+    "powershell -NoProfile -Command \"$ProgressPreference='SilentlyContinue'; $d=$env:TEMP+'\\fzu-checkin-un'; if (Test-Path $d) { Remove-Item -Recurse -Force $d }; Expand-Archive -Force ($env:TEMP+'\\fzu-checkin.zip') $d\"",
+    'set "SRC=%TEMP%\\fzu-checkin-un\\' + SRC_DIR + '"',
+    'if not exist "%SRC%\\main.py" (',
+    '    echo   [X] 解压后没找到 main.py，下载可能不完整，重新双击本脚本再试。',
+    '    pause',
+    '    exit /b 1',
+    ')',
+    'echo       OK，代码已下载',
+    '',
+    'echo [3/5] 更新程序文件（config.yaml 保持原样）...',
+    'xcopy "%SRC%\\src" "%DIR%\\src\\" /E /I /Y >nul',
+    'copy /Y "%SRC%\\main.py" "%DIR%\\" >nul',
+    'copy /Y "%SRC%\\requirements.txt" "%DIR%\\" >nul',
+    'echo       OK，程序已换成最新版；你的 config.yaml 一个字没动',
+    '',
+    'echo [4/5] 更新依赖 ...',
+    '%PY% -m pip install -q -r "%DIR%\\requirements.txt" -i https://pypi.tuna.tsinghua.edu.cn/simple',
+    'echo       OK',
+    '',
+    'echo [5/5] 试运行（只检查，不真签、不推送）...',
+    'set "FZU_CHECKIN_FORCE=1"',
+    '%PY% "%DIR%\\main.py"',
+    'echo.',
+    'echo ==============================================',
+    'echo   更新完成！',
+    'echo   - 账号、坐标、推送配置：原样保留，没动',
+    'echo   - 计划任务：原样保留，今晚照常自动签到',
+    'echo   - 运行记录在 %DIR%\\run.log',
+    'echo ==============================================',
+    'pause',
+  ];
+  return L.join('\r\n');
+}
+document.getElementById('dlUpdate').addEventListener('click', () => {
+  const blob = new Blob([buildUpdateBat()], { type: 'application/octet-stream' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'fzu-checkin-update.bat';
   document.body.appendChild(a);
   a.click();
   a.remove();
