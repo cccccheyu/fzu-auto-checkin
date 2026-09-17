@@ -10,6 +10,7 @@ from src.vacation import matched_range, today_cn
 from src.campus import match_campus
 
 import datetime
+import json
 import os
 import re
 import sys
@@ -69,6 +70,71 @@ def _notify(cfg, title: str, content: str) -> bool:
     if not ok:
         print("[notify] 警告：本次结果推送失败，请检查 config.yaml 的 notify 配置（签到结果不受影响）")
     return ok
+
+
+def _daily_confirm_state_path(cfg):
+    """每日完成确认的去重状态文件（记当天日期即可）。
+
+    放在 config.yaml 同级的 state/ 下；拿不到配置目录时退回用户家目录。
+    云端（GitHub Actions）每次都是全新容器、磁盘不保留，天然去不了重——
+    所以那边靠 _on_github_actions() 直接关掉，否则 16 档会每档都推、刷屏。
+    """
+    try:
+        base = os.path.dirname(os.path.abspath(cfg.get("_config_path") or ""))
+        if base and os.path.isdir(base):
+            d = os.path.join(base, "state")
+            os.makedirs(d, exist_ok=True)
+            return os.path.join(d, "daily_confirm.json")
+    except Exception:
+        pass
+    return os.path.join(os.path.expanduser("~"), ".fzu-checkin-daily-confirm.json")
+
+
+def _on_github_actions() -> bool:
+    """是否跑在 GitHub Actions 上（云端无持久磁盘，每日确认必须关闭）。"""
+    return os.environ.get("GITHUB_ACTIONS", "").lower() == "true"
+
+
+def _daily_confirm(cfg, title: str, content: str) -> bool:
+    """每晚至多推一次的「完成确认」（心跳）。
+
+    价值：让你能区分「系统活着、今晚只是没活干」和「系统已经死了三天你不知道」。
+    2026-09-16 那次事故就是签到成功却因打印崩溃整晚零消息，用户完全无从判断系统状态。
+
+    规则：
+    - 开关：`notify.daily_confirm`（默认 true），设 false 彻底关闭
+    - 云端强制关闭（见 _on_github_actions）
+    - 去重：状态文件记当天日期，当天已推过就静默
+    - **只用于「结论已确定」的分支**。像「服务器还没发布计划」这种
+      不确定状态不要走这里——它自己有推送逻辑，拿来当心跳会发出假消息。
+    - 不硬编码发送时刻：哪档先遇到确定结论就哪档发，因此对任意排档都自适应。
+      默认四档（21:35/21:50/22:05/23:40）下，21:35 通常直接签掉并推「签到成功」，
+      所以确认实际多在 22:05 附近发出。
+    """
+    if _on_github_actions():
+        print("（GitHub Actions 环境：每日完成确认已关闭，避免每档重复推送）")
+        return False
+    if not (cfg.get("notify") or {}).get("daily_confirm", True):
+        return False
+
+    today = beijing_now().strftime("%Y-%m-%d")
+    path = _daily_confirm_state_path(cfg)
+    try:
+        if os.path.exists(path):
+            if (json.load(open(path, encoding="utf-8")) or {}).get("date") == today:
+                print(f"每日完成确认：今天（{today}）已推送过，本次静默")
+                return False
+    except Exception as e:
+        print(f"读取确认状态失败（按未推送处理）: {e}")
+
+    if not _notify(cfg, title, content):
+        return False
+
+    try:
+        json.dump({"date": today}, open(path, "w", encoding="utf-8"))
+    except Exception as e:
+        print(f"写入确认状态失败（不影响签到结果）: {e}")
+    return True
 
 
 def main():
@@ -195,17 +261,26 @@ def main():
         return
 
     if not status["need_checkin"]:
-        # 静默：21:35 首跑成功时已推送过，21:50 兜底跑只需记日志，不再打扰
-        print("已签到 / 无需操作（不推送，避免每晚重复通知）")
+        # 已签到：每晚至多推一条「今日已完成」当心跳。
+        # 以前这里是彻底静默，代价是——首档签到成功但推送丢失时（2026-09-16），
+        # 整晚一条消息都没有，你根本分不清「系统正常但没活干」还是「系统已经死了」。
+        _daily_confirm(
+            cfg,
+            "智汇福大晚点名：今日已完成 ✅",
+            "今日晚点名已签到，无需任何操作。\n"
+            "（这是每晚一条的完成确认，用来确认自动签到仍在正常运行；"
+            "不想收到可在 config.yaml 把 notify.daily_confirm 设为 false）",
+        )
         return
 
     if not init_data.get("schoolData"):
-        title = "智汇福大晚点名：今日无考勤计划"
-        # 首跑（22:00 前）推送提醒一次；后面的兜底跑静默，避免一晚连推多条
-        if beijing_now().time() < datetime.time(22, 0):
-            _notify(cfg, title, "服务器未返回签到范围（可能今日无晚点名），未执行打卡。")
-        else:
-            print(f"{title}（晚间兜底跑：无考勤计划，静默跳过，不重复推送）")
+        # 今日无考勤计划也是「确定结论」，同样纳入每晚一条的完成确认
+        _daily_confirm(
+            cfg,
+            "智汇福大晚点名：今日无考勤计划",
+            "服务器未返回签到范围（可能今日无晚点名），未执行打卡。\n"
+            "（这是每晚一条的完成确认，用来确认自动签到仍在正常运行）",
+        )
         return
 
     try:
