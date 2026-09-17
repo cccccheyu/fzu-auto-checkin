@@ -8,7 +8,7 @@
 <meta http-equiv="Expires" content="0">
 <title>福大晚点名自动签到 · 配置生成器</title>
 <style>
-  :root { --brand:#4f6ef2; --bg:#f6f7fb; --card:#fff; --line:#e5e8f0; --txt:#1c2333; --sub:#6b7280; --ok:#16a34a; }
+  :root { --brand:#4f6ef2; --bg:#f6f7fb; --card:#fff; --line:#e5e8f0; --txt:#1c2333; --sub:#6b7280; --ok:#16a34a; --err:#dc2626; }
   * { box-sizing:border-box; margin:0; padding:0; }
   html { scroll-behavior:smooth; }
   body { font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background:var(--bg); color:var(--txt); line-height:1.6; padding:24px 12px 80px; }
@@ -35,6 +35,7 @@
   .btn:disabled { opacity:.45; cursor:not-allowed; }
   textarea { width:100%; height:190px; border:1px solid var(--line); border-radius:8px; padding:10px; font:12px/1.5 Consolas,monospace; background:#fbfcfe; white-space:pre; }
   .ok-msg { color:var(--ok); font-size:13px; margin-top:6px; display:none; }
+  .ok-msg.err { color:var(--err); }
   .hide { display:none; }
   .plat-list { margin-top:6px; }
   .plat { display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid var(--line); border-radius:8px; margin-bottom:8px; cursor:pointer; }
@@ -110,7 +111,9 @@
       </div>
       <p class="hint">想核对坐标是否就在你宿舍楼：<a href="https://lbs.amap.com/tools/picker" target="_blank">高德坐标拾取器</a>里搜一下。</p>
     </div>
-    <p class="hint" id="coordFallback" style="display:none">定位不成功？<a href="#" id="coordManual">手动填写坐标</a>（格式 119.xxxxx / 26.xxxxx）</p>
+    <!-- 常驻（原来只在「定位失败」时才出现）：浏览器定位会漂移，定位成功但位置不对时
+         用户改不了只读输入框、也找不到手动入口 → 等于被卡死。所以这个出口必须一直可见。 -->
+    <p class="hint" id="coordFallback">坐标不准、或定位不成功？<a href="#" id="coordManual">手动填写坐标</a>（格式 119.xxxxx / 26.xxxxx，也可直接从高德拾取器复制）</p>
     <p class="hint">浏览器定位需授权且要求 HTTPS：微信内打不开时，用 Safari/Chrome 打开本页。工具不伪造定位。</p>
     <p class="hint">签前护栏：坐标必须落在你所在校区范围内（已内置福大各校区），明显不在校区的坐标会被拦截、不会真的签到。</p>
   </div>
@@ -126,8 +129,11 @@
     <div id="platField" class="hide">
       <label id="platLabel">Key / Token</label>
       <input type="text" id="platKey" placeholder="粘贴 key，或 App 复制的推送 URL（自动提取）">
+      <!-- 记忆会恢复「平台选择」但不会恢复 key（key 不落盘）。不说明的话用户会以为已经配好，
+           直接生成 → serverchan_key: "" → 后端静默 return False → 推送永久失效且零报错。 -->
+      <p class="hint" id="platKeyWarn" style="display:none">⚠️ 上次选的平台已帮你选好，但 <b>key 出于安全不会保存在本机</b>，请重新粘贴一次。</p>
       <button class="btn ghost" id="testPush">📤 发一条测试推送到我手机</button>
-      <p class="ok-msg" id="testOk">已发出！10 秒内手机没收到，多半是 key 复制错了，回去核对一下。</p>
+      <p class="ok-msg" id="testOk"></p>
       <p class="hint" id="platHint"></p>
     </div>
   </div>
@@ -279,9 +285,8 @@ function wgs2gcj(lat, lng) {
 }
 document.getElementById('locate').addEventListener('click', () => {
   const okEl = document.getElementById('locOk');
-  const fb = document.getElementById('coordFallback');
-  okEl.style.display = 'none'; fb.style.display = 'none';
-  if (!navigator.geolocation) { fb.style.display = 'block'; alert('当前环境不支持定位（用本地文件打开时浏览器会禁用）。请在线上链接打开本页。'); return; }
+  okEl.style.display = 'none';
+  if (!navigator.geolocation) { alert('当前环境不支持定位（用本地文件打开时浏览器会禁用）。请在线上链接打开本页。'); return; }
   navigator.geolocation.getCurrentPosition(pos => {
     const { latitude, longitude, accuracy } = pos.coords;
     const gcj = wgs2gcj(latitude, longitude);
@@ -291,11 +296,10 @@ document.getElementById('locate').addEventListener('click', () => {
     okEl.textContent = `✅ 已定位并换算为高德坐标（精度约 ${Math.round(accuracy)} 米），坐标已自动填好。`;
     okEl.style.display = 'block';
   }, err => {
-    fb.style.display = 'block';
     alert('定位失败：' + err.message + '\n\n常见原因：① 微信内置浏览器受限 → 长按链接用 Safari/Chrome 打开；② 未授权定位 → 浏览器设置里允许本页定位；③ 站在室内深处信号弱 → 靠窗再试。也可以点下面的「手动填写坐标」。');
   }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 });
 });
-// 定位失败时的手动兜底：点开才变成可填
+// 手动兜底：常驻入口，点开才变成可填（原来是「定位失败才出现」，导致定位漂移时用户无法修正）
 const coordManual = document.getElementById('coordManual');
 if (coordManual) coordManual.addEventListener('click', e => {
   e.preventDefault();
@@ -306,8 +310,8 @@ if (coordManual) coordManual.addEventListener('click', e => {
 
 // —— 推送平台 ——
 const platMeta = {
-  serverchan:{ label:'Server酱 SendKey', hint:'获取：<a href="https://sct.ftqq.com" target="_blank">sct.ftqq.com</a> ①微信扫二维码登录 → ②首页复制 SendKey（SCP 开头）→ ③粘贴到这里 → ④微信里关注「方糖」服务号（不关注收不到推送）', url:k=>`https://sctapi.ftqq.com/${k}.send?title=福大晚点名测试推送&desp=配置成功，每晚多档自动签到。` },
-  bark:      { label:'Bark key', hint:'获取：App Store 安装 Bark → 长按复制示例 URL，<b>整段粘贴到上面</b>，key 自动提取。收不到或深夜才收到：手机「设置 → 专注模式 → 睡眠 → 允许的 App」加上 Bark（详见 README 常见问题）', url:k=>`https://api.day.app/${k}/福大晚点名测试推送/配置成功` },
+  serverchan:{ label:'Server酱 SendKey', hint:'获取：<a href="https://sct.ftqq.com" target="_blank">sct.ftqq.com</a> ①微信扫二维码登录 → ②首页复制 SendKey（SCP 开头）→ ③粘贴到这里 → ④微信里关注「方糖」服务号（不关注收不到推送）', url:k=>`https://sctapi.ftqq.com/${k}.send?title=${encodeURIComponent('福大晚点名测试推送')}&desp=${encodeURIComponent('配置成功，每晚多档自动签到。')}` },
+  bark:      { label:'Bark key', hint:'获取：App Store 安装 Bark → 长按复制示例 URL，<b>整段粘贴到上面</b>，key 自动提取。收不到或深夜才收到：手机「设置 → 专注模式 → 睡眠 → 允许的 App」加上 Bark（详见 README 常见问题）', url:k=>`https://api.day.app/${k}/${encodeURIComponent('福大晚点名测试推送')}/${encodeURIComponent('配置成功')}` },
 };
 // 粘贴自动提取：Bark 整段推送 URL / Server酱 URL，都能直接贴
 function extractKey(p, raw){
@@ -327,6 +331,9 @@ function normKey(){
   const el = document.getElementById('platKey');
   const c = extractKey(plat, el.value);
   if (c && c !== el.value) el.value = c;
+  // 一填上 key 就撤掉「请重新粘贴」的提醒
+  const w = document.getElementById('platKeyWarn');
+  if (w && c) w.style.display = 'none';
   return el.value;
 }
 const platList = document.getElementById('platList');
@@ -340,18 +347,46 @@ platList.addEventListener('click', e => {
   if (show) {
     document.getElementById('platLabel').textContent = platMeta[plat].label;
     document.getElementById('platHint').innerHTML = platMeta[plat].hint;
+    // 主动换平台 = 用户已在操作，「请重新粘贴 key」的提醒功成身退
+    const w = document.getElementById('platKeyWarn');
+    if (w) w.style.display = 'none';
     normKey();
   }
 });
 
-// —— 测试推送（浏览器直发，fire-and-forget）——
+// —— 测试推送：直发并读回结果 ——
+// 实测两个平台都允许跨域读响应（sctapi.ftqq.com 回显 Origin、api.day.app 为 *，OPTIONS 预检均通过），
+// 所以不需要 no-cors。no-cors 只能拿到 opaque response，永远判不出成败，用户只能去手机干等 10 秒。
 document.getElementById('platKey').addEventListener('input', normKey);
-document.getElementById('testPush').addEventListener('click', () => {
+document.getElementById('testPush').addEventListener('click', async () => {
   const k = normKey();
   if (!k) { alert('先粘贴 key'); return; }
-  fetch(platMeta[plat].url(k), { mode:'no-cors' }).finally(() => {
-    document.getElementById('testOk').style.display = 'block';
-  });
+  const btn = document.getElementById('testPush');
+  const el = document.getElementById('testOk');
+  el.style.display = 'block';
+  el.classList.remove('err');
+  el.textContent = '⏳ 正在发送…';
+  btn.disabled = true;
+  try {
+    const r = await fetch(platMeta[plat].url(k), { cache: 'no-store' });
+    let ok = r.ok, why = '';
+    if (plat === 'serverchan') {
+      const j = await r.json().catch(() => null);
+      ok = r.ok && !!j && j.code === 0;
+      if (!ok) why = (j && (j.message || j.info)) || ('HTTP ' + r.status);
+    }
+    if (ok) {
+      el.textContent = '✅ 推送成功，去看手机（微信 / Bark 可能有几秒延迟）。';
+    } else {
+      el.classList.add('err');
+      el.textContent = '❌ 发送失败：' + (why || ('HTTP ' + r.status)) + '。key 不对、或没关注「方糖」服务号都会这样 —— 回上面核对一下。';
+    }
+  } catch (e) {
+    el.classList.add('err');
+    el.textContent = '❌ 请求没发出去（' + e.message + '）。多半是网络问题，换个网络或挂梯子再点一次。';
+  } finally {
+    btn.disabled = false;
+  }
 });
 
 // —— GitHub 连通性检测 ——
@@ -418,6 +453,12 @@ function buildYaml() {
     user = `user:\n  token: "${v('token')}"\n  username: ""\n  password: ""`;
   }
   if (!v('lng') || !v('lat')) { alert('坐标还没填（第 2 步）'); throw ''; }
+  // 选了推送平台却没填 key → 后端 _serverchan("") 直接 return False，签到成功也不会有任何通知。
+  // 必须在这里拦下来，否则「平台看起来已经配好」会一直骗到用户（本机记忆会恢复平台、但不恢复 key）。
+  if (plat !== 'none' && !normKey()) {
+    alert('第 3 步选了推送平台，但 key 还是空的。\n\n要么把 key 粘贴进去，要么把平台改回「不提醒」——\n否则签到成功也不会收到通知。');
+    throw '';
+  }
   const lngN = parseFloat(v('lng')), latN = parseFloat(v('lat'));
   const myCampus = matchCampus(lngN, latN);
   if (!myCampus && !confirm('⚠️ 坐标 (' + lngN + ', ' + latN + ') 不在已知校区范围内。\n\n' +
@@ -986,6 +1027,10 @@ function memRestore(){
   if (m.plat && m.plat !== 'none') {
     const r = document.querySelector('input[name=plat][value="' + m.plat + '"]');
     if (r) r.click();
+    // key 不落盘（安全考虑），所以恢复出来的平台必然缺 key —— 必须显式说清楚，
+    // 否则用户会以为「平台已经选好=配好了」，直接生成空 key，推送永久静默。
+    const w = document.getElementById('platKeyWarn');
+    if (w && !document.getElementById('platKey').value) w.style.display = 'block';
   }
   if (m.vac && m.vac.length) {
     vacList.innerHTML = '';
