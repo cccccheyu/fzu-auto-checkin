@@ -89,3 +89,8 @@ notify:
   serverchan_key: ""    # Server酱 Turbo SendKey（微信扫码登录 sct.ftqq.com 获取，需关注「方糖」服务号）
   bark_url: ""          # Bark 推送完整 URL（iPhone 推荐；注意重装 App 会换 key）
   wecom_webhook: ""     # 企业微信群机器人 webhook
+  # 每晚一条「完成确认」（已签到 / 今日无考勤计划时推送，每晚最多一条）。
+  # 作用：让你能确认自动签到程序还活着——不然某天它悄悄挂了，你只会觉得"今晚怎么没消息"。
+  # 只在本地部署生效；GitHub Actions 云端跑会自动关闭（那边每 30 分钟一档，推送会刷屏）。
+  # 觉得多余就设为 false。
+  daily_confirm: true
