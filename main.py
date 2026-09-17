@@ -102,7 +102,13 @@ def _daily_confirm(cfg, title: str, content: str) -> bool:
     2026-09-16 那次事故就是签到成功却因打印崩溃整晚零消息，用户完全无从判断系统状态。
 
     规则：
-    - 开关：`notify.daily_confirm`（默认 true），设 false 彻底关闭
+    - 开关：`notify.daily_confirm`（**默认 false**，需显式写 true 才发）。
+      2026-09-17 用户拍板：「全关了吧，如果有 bug 再发通知」——
+      心跳的价值（探测"程序完全没跑"）被判定为不值每晚这一条的打扰。
+      ⚠️ 代价必须清楚：关掉后，「程序崩溃/电脑没开/计划任务被删」这类
+      **发不出消息的故障将完全静默**，只能等下次真需要签到那晚才发现。
+      签到失败 / 不在范围 / 坐标异常等**异常仍然照推**（那些走 _notify，不受本开关管），
+      所以"有 bug 再通知"这条是满足的。
     - 云端强制关闭（见 _on_github_actions）
     - 去重：状态文件记当天日期，当天已推过就静默
     - **只用于「结论已确定」的分支**。像「服务器还没发布计划」这种
@@ -114,7 +120,7 @@ def _daily_confirm(cfg, title: str, content: str) -> bool:
     if _on_github_actions():
         print("（GitHub Actions 环境：每日完成确认已关闭，避免每档重复推送）")
         return False
-    if not (cfg.get("notify") or {}).get("daily_confirm", True):
+    if not (cfg.get("notify") or {}).get("daily_confirm", False):
         return False
 
     today = beijing_now().strftime("%Y-%m-%d")
