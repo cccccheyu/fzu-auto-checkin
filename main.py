@@ -108,8 +108,8 @@ def _daily_confirm(cfg, title: str, content: str) -> bool:
     - **只用于「结论已确定」的分支**。像「服务器还没发布计划」这种
       不确定状态不要走这里——它自己有推送逻辑，拿来当心跳会发出假消息。
     - 不硬编码发送时刻：哪档先遇到确定结论就哪档发，因此对任意排档都自适应。
-      默认四档（21:35/21:50/22:05/23:40）下，21:35 通常直接签掉并推「签到成功」，
-      所以确认实际多在 22:05 附近发出。
+    - **签到成功/失败的分支不再补心跳**：那些分支已经把结论推给你了，
+      当晚你已经知道结果，再补一条「今日已完成」就是重复（见 _mark_confirmed）。
     """
     if _on_github_actions():
         print("（GitHub Actions 环境：每日完成确认已关闭，避免每档重复推送）")
@@ -135,6 +135,25 @@ def _daily_confirm(cfg, title: str, content: str) -> bool:
     except Exception as e:
         print(f"写入确认状态失败（不影响签到结果）: {e}")
     return True
+
+
+def _mark_confirmed(cfg):
+    """把当天标记为「今晚已经推送过结论」，后续档不再补心跳。
+
+    2026-09-17 实测：21:35 那档签到成功、推了「签到成功 ✅」，但它走的是 _notify，
+    **不写去重状态**；21:50 那档发现「已签到」→ 走 _daily_confirm → 以为今晚还没推过
+    → 又推一条「今日已完成 ✅」，一晚白收两条。
+
+    签到成功 / 签到失败 / 不在签到范围，都是当晚已送达的确定结论，
+    心跳的价值（证明系统还活着）已经兑现，不必再来一条。
+    """
+    if _on_github_actions():
+        return
+    try:
+        json.dump({"date": beijing_now().strftime("%Y-%m-%d")},
+                  open(_daily_confirm_state_path(cfg), "w", encoding="utf-8"))
+    except Exception as e:
+        print(f"写入确认状态失败（不影响签到结果）: {e}")
 
 
 def main():
