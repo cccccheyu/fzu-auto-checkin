@@ -12,9 +12,20 @@ from src.campus import match_campus
 import datetime
 import os
 import re
+import sys
 import time
 
 import requests
+
+# Windows 计划任务 / run.bat 追加日志时，stdout 默认走 GBK(cp936)，
+# 标题里的 ✅ ❌ 编码不了会抛 UnicodeEncodeError 直接终止进程——
+# 2026-09-16 晚就因签到成功后 print("…✅") 崩在 notify() 前一行，导致整晚零通知。
+# 这里强制 UTF-8 并容错，保证「打印」永远不会中断主流程。
+try:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:  # 非 CPython / 无 reconfigure 能力时忽略
+    pass
 
 
 def _save_token(cfg, token: str):
@@ -32,6 +43,32 @@ def _save_token(cfg, token: str):
             print("新 token 已回写 config.yaml")
     except Exception as e:
         print(f"token 回写失败（不影响本次运行）: {e}")
+
+
+def _notify(cfg, title: str, content: str) -> bool:
+    """推送结果。铁律：**先推送，后打印**——打印/编码异常绝不能吞掉通知。
+
+    2026-09-16 教训：GBK 环境下 print("签到成功 ✅") 抛 UnicodeEncodeError，
+    进程在 notify() 前一行就死了，签到成功却整晚零消息。
+    这里推送失败自动重试一次；仍失败时打印醒目告警（签到结果本身不受影响）。
+    """
+    ok = False
+    for attempt in (1, 2):
+        try:
+            if notify(cfg, title, content):
+                ok = True
+                break
+        except Exception as e:  # notify 内部已兜底，这里再兜一层
+            print(f"[notify] 第 {attempt} 次推送异常：{e}")
+        if attempt == 1:
+            print("[notify] 推送未成功，重试一次…")
+    try:
+        print(title)
+    except Exception:
+        pass
+    if not ok:
+        print("[notify] 警告：本次结果推送失败，请检查 config.yaml 的 notify 配置（签到结果不受影响）")
+    return ok
 
 
 def main():
@@ -56,9 +93,10 @@ def main():
     # 假期自动跳过：命中校历/自定义区间时什么都不做（默认静默）
     vac = matched_range(cfg)
     if vac:
-        print(f"假期中（{vac}），跳过本次签到。今天是 {today_cn()}。")
         if (cfg.get("vacation") or {}).get("notify"):
-            notify(cfg, f"智汇福大晚点名：假期中，已跳过（{vac}）", "假期期间自动签到暂停。")
+            _notify(cfg, f"智汇福大晚点名：假期中，已跳过（{vac}）", "假期期间自动签到暂停。")
+        else:
+            print(f"假期中（{vac}），跳过本次签到。今天是 {today_cn()}。")
         return
 
     # 定位签到护栏：签前校验配置坐标必须落在任一校区范围内（软约束，防误填/防离校代签）。
@@ -71,19 +109,19 @@ def main():
         lng = lat = None
     if lng is None or lat is None:
         title = "智汇福大晚点名：坐标未配置 ❌"
-        print(f"{title} 请填写 config.yaml 的 checkin.longitude / latitude")
+        print("未读到有效坐标，本次未签到（请填 config.yaml 的 checkin.longitude / latitude）")
         if not force:
-            notify(cfg, title,
-                   "未读到有效坐标，本次未签到。请在 config.yaml 的 checkin.longitude / latitude 填入你的坐标。")
+            _notify(cfg, title,
+                    "未读到有效坐标，本次未签到。请在 config.yaml 的 checkin.longitude / latitude 填入你的坐标。")
         return
     campus = match_campus(lng, lat, cfg)
     if campus is None:
         title = "智汇福大晚点名：坐标不在校区范围，已拦截 ❌"
-        print(f"{title} 坐标=({lng}, {lat})")
+        print(f"坐标=({lng}, {lat}) 未命中任何校区")
         if force:
             print("[试运行] 坐标不在任何校区范围内，正式运行会被拦截，请先核对坐标")
         else:
-            notify(cfg, title,
+            _notify(cfg, title,
                    "配置的坐标不在任何校区范围内，今日签到已拦截。请核对 config.yaml 的 "
                    "checkin.longitude / latitude；若你在其他校区，可在 campus.bounds 里补上该校区范围。")
         return
@@ -127,20 +165,20 @@ def main():
                 print("重新登录成功，已用新 token 继续。")
             except Exception as e2:
                 title = "智汇福大晚点名：服务器暂未返回今日计划"
-                print(title, "（重登也失败）", e2)
                 if beijing_now().time() < datetime.time(21, 45):
-                    notify(cfg, title, f"服务器未返回今日计划，重新登录也失败：{e2}\n如需请手动打开 App 确认。")
+                    _notify(cfg, title, f"服务器未返回今日计划，重新登录也失败：{e2}\n如需请手动打开 App 确认。")
+                else:
+                    print(f"{title}（重登也失败，兜底跑静默）{e2}")
                 return
             if status is None:
                 return
         else:
             title = "智汇福大晚点名：服务器暂未返回今日计划"
-            print(title, e)
             # 21:45 前视为首跑，推送提醒一次即可；21:50/22:05 兜底跑静默，避免一晚连推三条
             if beijing_now().time() < datetime.time(21, 45):
-                notify(cfg, title, "服务器暂时无今日计划数据（跨天时段/服务波动），本次跳过。稍后自动重试无需操作。")
+                _notify(cfg, title, "服务器暂时无今日计划数据（跨天时段/服务波动），本次跳过。稍后自动重试无需操作。")
             else:
-                print("（兜底跑：仍无计划数据，静默跳过，不再重复推送）")
+                print(f"{title} {e}（兜底跑：仍无计划数据，静默跳过，不再重复推送）")
             return
     init_data = status["init"]
 
@@ -160,30 +198,23 @@ def main():
 
     if not init_data.get("schoolData"):
         title = "智汇福大晚点名：今日无考勤计划"
-        print(title)
         # 首跑（22:00 前）推送提醒一次；后面的兜底跑静默，避免一晚连推多条
         if beijing_now().time() < datetime.time(22, 0):
-            notify(cfg, title, "服务器未返回签到范围（可能今日无晚点名），未执行打卡。")
+            _notify(cfg, title, "服务器未返回签到范围（可能今日无晚点名），未执行打卡。")
         else:
-            print("（晚间兜底跑：无考勤计划，静默跳过，不重复推送）")
+            print(f"{title}（晚间兜底跑：无考勤计划，静默跳过，不重复推送）")
         return
 
     try:
         ok = do_checkin(client, cfg, init_data)
     except Exception as e:  # 接口报错（如不在时段/范围）要带原因推送
-        title = "智汇福大晚点名：签到失败 ❌"
-        print(title, e)
-        notify(cfg, title, f"自动签到失败：{e}\n请手动打开 App 签到。")
+        _notify(cfg, "智汇福大晚点名：签到失败 ❌", f"自动签到失败：{e}\n请手动打开 App 签到。")
         return
 
     if ok:
-        title = "智汇福大晚点名：签到成功 ✅"
-        print(title)
-        notify(cfg, title, "今日晚点名已自动签到成功。")
+        _notify(cfg, "智汇福大晚点名：签到成功 ✅", "今日晚点名已自动签到成功。")
     else:
-        title = "智汇福大晚点名：不在签到范围 ❌"
-        print(title)
-        notify(cfg, title, "定位校验未命中任何校区，请确认配置的经纬度。")
+        _notify(cfg, "智汇福大晚点名：不在签到范围 ❌", "定位校验未命中任何校区，请确认配置的经纬度。")
 
 
 if __name__ == "__main__":
