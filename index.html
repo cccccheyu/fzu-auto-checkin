@@ -136,6 +136,7 @@
       <p class="ok-msg" id="testOk"></p>
       <label class="chk" style="margin-top:12px"><input type="checkbox" id="dailyConfirm" checked><span>每晚推一条<b>完成确认</b>：程序没签到时（你自己已经签过了、或今日没有晚点名）也推一条，让你知道自动签到还在正常运行。<b>签到成功 / 失败另有通知，不会重复推。</b></span></label>
       <p class="hint">💡 云端部署时程序会自动关掉这一条（那边每 30 分钟一档，推了会刷屏），只有装在自己电脑上时才用得到。</p>
+      <p class="hint">🔄 <b>已经装过、只想改这一项？</b>不用重新生成整份配置——账号和 key 出于安全不落盘，重新生成还得再填一遍。直接打开你的 <code>config.yaml</code>，在 <code>notify:</code> 下面加一行 <code>daily_confirm: false</code> 就行。</p>
       <p class="hint" id="platHint"></p>
     </div>
   </div>
