@@ -72,6 +72,9 @@ def _notify(cfg, title: str, content: str) -> bool:
 
 
 def main():
+    # 启动时间戳：run.log 由计划任务长期追加，没有时间信息就只能靠行序推演，
+    # 一次崩溃发生在几点、是哪一次运行都无从判断（2026-09-16 排查的最大障碍）。
+    print(f"===== 启动：北京时间 {beijing_now():%Y-%m-%d %H:%M:%S} =====")
     cfg = load_config()
 
     # GitHub 定时档实测常被延迟 1-4 小时（晚间档可能整批拖到凌晨）：
