@@ -134,9 +134,10 @@
       <p class="hint" id="platKeyWarn" style="display:none">⚠️ 上次选的平台已帮你选好，但 <b>key 出于安全不会保存在本机</b>，请重新粘贴一次。</p>
       <button class="btn ghost" id="testPush">📤 发一条测试推送到我手机</button>
       <p class="ok-msg" id="testOk"></p>
-      <label class="chk" style="margin-top:12px"><input type="checkbox" id="dailyConfirm" checked><span>每晚推一条<b>完成确认</b>：程序没签到时（你自己已经签过了、或今日没有晚点名）也推一条，让你知道自动签到还在正常运行。<b>签到成功 / 失败另有通知，不会重复推。</b></span></label>
-      <p class="hint">💡 云端部署时程序会自动关掉这一条（那边每 30 分钟一档，推了会刷屏），只有装在自己电脑上时才用得到。</p>
-      <p class="hint">🔄 <b>已经装过、只想改这一项？</b>不用重新生成整份配置——账号和 key 出于安全不落盘，重新生成还得再填一遍。直接打开你的 <code>config.yaml</code>，在 <code>notify:</code> 下面加一行 <code>daily_confirm: false</code> 就行。</p>
+      <label class="chk" style="margin-top:12px"><input type="checkbox" id="dailyConfirm"><span><b>可选</b>：每晚推一条<b>完成确认</b>——程序没签到时（你自己已经签过了、或今日没有晚点名）也推一条，让你知道自动签到还在正常运行。<b>默认不推</b>；签到成功 / 失败另有通知，本来就会推。</span></label>
+      <p class="hint">⚠️ 不勾的话，程序万一<b>没跑起来</b>（电脑关机、脚本崩了、计划任务被删）你会<b>完全收不到消息</b>——这类故障发不出任何通知，只能靠"每晚必有一条"来发现。想要这个保险就勾上。</p>
+      <p class="hint">💡 云端部署勾了也没用（那边每 30 分钟一档，程序会自动关掉它防刷屏）。</p>
+      <p class="hint">🔄 <b>已经装过、想打开这一条？</b>不用重新生成整份配置——账号和 key 出于安全不落盘，重新生成还得再填一遍。直接打开你的 <code>config.yaml</code>，在 <code>notify:</code> 下面加一行 <code>daily_confirm: true</code> 就行。</p>
       <p class="hint" id="platHint"></p>
     </div>
   </div>
@@ -471,10 +472,11 @@ function buildYaml() {
     const b = CAMPUS[n];
     return `    "${n}":\n      min_lng: ${b.min_lng}\n      max_lng: ${b.max_lng}\n      min_lat: ${b.min_lat}\n      max_lat: ${b.max_lat}`;
   }).join('\n');
-  // 「每晚完成确认」默认开；只有用户明确取消勾选时才写进配置，保持 yaml 干净。
-  // 注意：云端部署跑的时候后端会自动忽略它（_on_github_actions），所以勾不勾都不刷屏。
+  // 「每晚完成确认」默认不发（2026-09-17 用户拍板：全关，有 bug 再通知）。
+  // 只有用户明确勾选时才写进配置，保持 yaml 干净。
+  // 注意：云端部署跑的时候后端会自动忽略它（_on_github_actions）。
   const dcEl = document.getElementById('dailyConfirm');
-  const dcLine = (dcEl && dcEl.checked === false) ? '\n  daily_confirm: false' : '';
+  const dcLine = (dcEl && dcEl.checked === true) ? '\n  daily_confirm: true' : '';
   const platCfg = plat === 'none' ? '' :
     plat === 'serverchan' ? `notify:\n  type: "serverchan"\n  serverchan_key: "${normKey()}"${dcLine}` :
     `notify:\n  type: "bark"\n  bark_url: "https://api.day.app/${normKey()}"${dcLine}`;
@@ -1033,10 +1035,10 @@ function memRestore(){
   set('lng', m.lng); set('lat', m.lat);
   set('repoName', m.repo); set('vacRepo', m.vacRepo);
   if (m.lng && m.lat) document.getElementById('coordBox').classList.remove('hide');
-  // 「每晚完成确认」的勾选也记住（默认是勾着的，只有你明确取消过才恢复成不勾）
-  if (m.dc === false) {
+  // 「每晚完成确认」的勾选也记住（默认不勾，只有你明确勾过才恢复成勾着）
+  if (m.dc === true) {
     const dc = document.getElementById('dailyConfirm');
-    if (dc) dc.checked = false;
+    if (dc) dc.checked = true;
   }
   if (m.plat && m.plat !== 'none') {
     const r = document.querySelector('input[name=plat][value="' + m.plat + '"]');
