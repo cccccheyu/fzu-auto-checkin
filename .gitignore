@@ -11,3 +11,4 @@ venv/
 # ---- 运行时 ----
 *.log
 .DS_Store
+state/
