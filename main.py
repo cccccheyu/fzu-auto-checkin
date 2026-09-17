@@ -290,8 +290,8 @@ def main():
             cfg,
             "智汇福大晚点名：今日已完成 ✅",
             "今日晚点名已签到，无需任何操作。\n"
-            "（这是每晚一条的完成确认，用来确认自动签到仍在正常运行；"
-            "不想收到可在 config.yaml 把 notify.daily_confirm 设为 false）",
+            "（每晚一条的完成确认，用来确认自动签到还在正常运行。\n"
+            "不想收到：在 config.yaml 的 notify: 下面加一行 daily_confirm: false）",
         )
         return
 
@@ -301,7 +301,8 @@ def main():
             cfg,
             "智汇福大晚点名：今日无考勤计划",
             "服务器未返回签到范围（可能今日无晚点名），未执行打卡。\n"
-            "（这是每晚一条的完成确认，用来确认自动签到仍在正常运行）",
+            "（每晚一条的完成确认，用来确认自动签到还在正常运行。\n"
+            "不想收到：在 config.yaml 的 notify: 下面加一行 daily_confirm: false）",
         )
         return
 
